@@ -13,9 +13,15 @@ export default async function proxy(req: NextRequest) {
 
   if (!needsAuth && !needsAdmin) return NextResponse.next();
 
+  const isSecure = req.nextUrl.protocol === "https:";
+  const cookieName = isSecure
+    ? "__Secure-authjs.session-token"
+    : "authjs.session-token";
+
   const token = await getToken({
     req,
     secret: process.env.AUTH_SECRET,
+    cookieName,
   });
 
   if (!token) {
