@@ -1,0 +1,109 @@
+// SoCal Tech Diaspora — Prisma schema
+// Using PostgreSQL (Supabase or Neon free tier). Set DATABASE_URL in .env.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id             String   @id @default(cuid())
+  name           String
+  email          String   @unique
+  passwordHash   String
+  linkedinUrl    String
+  title          String
+  company        String?
+  bio            String?
+  pronouns       String?
+  whatINeed      String
+  howICanHelp    String
+  photoUrl       String?
+  tags           String[] @default([])
+  isApproved     Boolean  @default(false)
+  isAdmin        Boolean  @default(false)
+
+  // Referral tracking — who invited this member
+  invitedByUserId String?
+  invitedBy       User?   @relation("Invites", fields: [invitedByUserId], references: [id])
+  invitees        User[]  @relation("Invites")
+
+  // Password reset
+  resetToken        String?
+  resetTokenExpiry  DateTime?
+
+  // Relations
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  createdEvents    Event[]   @relation("CreatedEvents")
+  rsvps            Rsvp[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([invitedByUserId])
+}
+
+model Message {
+  id          String    @id @default(cuid())
+  body        String
+  senderId    String
+  recipientId String
+  sender      User      @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  recipient   User      @relation("ReceivedMessages", fields: [recipientId], references: [id], onDelete: Cascade)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([senderId])
+  @@index([recipientId])
+}
+
+model Event {
+  id              String   @id @default(cuid())
+  title           String
+  description     String
+  dateTime        DateTime
+  address         String
+  createdByUserId String
+  createdBy       User     @relation("CreatedEvents", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  rsvps           Rsvp[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([createdByUserId])
+}
+
+model Resource {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  url         String?
+  // category: "education" | "opportunities"
+  category    String
+  // subcategory: "courses" | "videos" | "funding" | "jobs" | "co-founder" | "speaking" | "donations"
+  subcategory String
+  isPublished Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([subcategory])
+}
+
+model Rsvp {
+  id        String   @id @default(cuid())
+  eventId   String
+  userId    String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+  @@index([eventId])
+  @@index([userId])
+}
