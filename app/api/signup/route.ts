@@ -35,21 +35,30 @@ export async function POST(req: NextRequest) {
 
   const passwordHash = await bcrypt.hash(data.password, 10);
 
-  const user = await prisma.user.create({
-    data: {
-      name: data.name,
-      email,
-      passwordHash,
-      linkedinUrl: data.linkedinUrl,
-      title: data.title,
-      company: data.company || null,
-      whatINeed: data.whatINeed,
-      howICanHelp: data.howICanHelp,
-      photoUrl: data.photoUrl || null,
-      invitedByUserId,
-      isApproved: false, // Admin approval required before login.
-    },
-  });
+  let user;
+  try {
+    user = await prisma.user.create({
+      data: {
+        name: data.name,
+        email,
+        passwordHash,
+        linkedinUrl: data.linkedinUrl,
+        title: data.title,
+        company: data.company || null,
+        whatINeed: data.whatINeed,
+        howICanHelp: data.howICanHelp,
+        photoUrl: data.photoUrl || null,
+        invitedByUserId,
+        isApproved: false,
+      },
+    });
+  } catch (err) {
+    console.error("[signup] DB error:", err);
+    return NextResponse.json(
+      { error: "Database error: " + (err instanceof Error ? err.message : String(err)) },
+      { status: 500 }
+    );
+  }
 
   // Confirmation email to the applicant.
   await sendEmail({
