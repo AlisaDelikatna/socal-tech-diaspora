@@ -21,15 +21,23 @@ export async function PUT(
   }
 
   const d = parsed.data;
-  await prisma.event.update({
-    where: { id },
-    data: {
-      title: d.title,
-      description: d.description,
-      dateTime: new Date(d.dateTime),
-      address: d.address,
-    },
-  });
+  try {
+    await prisma.event.update({
+      where: { id },
+      data: {
+        title: d.title,
+        description: d.description,
+        dateTime: new Date(d.dateTime),
+        address: d.address,
+      },
+    });
+  } catch (err) {
+    console.error("[events PUT] update failed:", err);
+    return NextResponse.json(
+      { error: "Could not save the event. The database may be unavailable — try again in a moment." },
+      { status: 500 }
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }

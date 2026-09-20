@@ -31,7 +31,18 @@ export default async function AdminPage() {
     }),
     prisma.event.findMany({
       orderBy: { dateTime: "desc" },
-      include: { _count: { select: { rsvps: true } } },
+      include: {
+        _count: { select: { rsvps: true } },
+        rsvps: {
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            user: {
+              select: { id: true, name: true, email: true, title: true, company: true },
+            },
+          },
+        },
+      },
     }),
     prisma.resource.findMany({
       orderBy: { createdAt: "desc" },
@@ -70,6 +81,13 @@ export default async function AdminPage() {
             dateTime: e.dateTime.toISOString(),
             address: e.address,
             rsvpCount: e._count.rsvps,
+            attendees: e.rsvps.map((r) => ({
+              id: r.user.id,
+              name: r.user.name,
+              email: r.user.email,
+              title: r.user.title,
+              company: r.user.company,
+            })),
           }))}
         />
       </section>

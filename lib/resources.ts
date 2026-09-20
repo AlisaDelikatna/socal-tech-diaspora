@@ -13,6 +13,7 @@ export const CATEGORIES = {
       "co-founder": "Co-Founder Match",
       jobs: "Jobs",
       speaking: "Speaker Opportunities",
+      sponsorships: "Sponsorships",
       donations: "Donations",
     },
   },

@@ -126,6 +126,20 @@ export default function JoinForm() {
         </p>
       )}
 
+      <label className="flex items-start gap-2.5 text-sm text-muted">
+        <input
+          type="checkbox"
+          name="emailConsent"
+          required
+          className="mt-0.5 h-4 w-4 shrink-0 accent-brand"
+        />
+        <span>
+          By becoming a member, I agree to receive emails, newsletters, and
+          event invitations from Kolo Founders Circle. I can unsubscribe at any
+          time.
+        </span>
+      </label>
+
       <Button type="submit" disabled={submitting} className="w-full">
         {submitting ? "Submitting…" : "Submit application"}
       </Button>

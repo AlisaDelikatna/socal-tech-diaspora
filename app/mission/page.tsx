@@ -29,7 +29,7 @@ export default function MissionPage() {
       <span className="text-sm font-semibold text-accent uppercase tracking-wide">
         Our Mission
       </span>
-      <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold">
+      <h1 className="mt-2 text-3xl sm:text-4xl font-normal">
         Kolo Founders Circle unites Ukrainian tech professionals, founders, and
         newcomers in Southern California to grow together — professionally,
         culturally, and as a community that has each other&apos;s back.
