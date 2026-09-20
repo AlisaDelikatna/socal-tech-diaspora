@@ -45,12 +45,12 @@ export async function POST(req: NextRequest) {
   const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
   await sendEmail({
     to: recipient.email,
-    subject: `New message from ${session.user.name} on SoCal Tech Diaspora`,
+    subject: `New message from ${session.user.name} on Kolo Founders Circle`,
     html: emailLayout(`
       <p>Hi ${recipient.name.split(" ")[0]},</p>
-      <p>You have a new message from <strong>${session.user.name}</strong> on SoCal Tech Diaspora.</p>
+      <p>You have a new message from <strong>${session.user.name}</strong> on Kolo Founders Circle.</p>
       <p style="margin: 20px 0;">
-        <a href="${base}/messages/${session.user.id}" style="background:#2563eb;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Log in to reply</a>
+        <a href="${base}/messages/${session.user.id}" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Log in to reply</a>
       </p>
     `),
   });

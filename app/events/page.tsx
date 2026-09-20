@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { Card, LinkButton } from "@/components/ui";
 
 export const metadata = {
-  title: "Events — SoCal Tech Diaspora",
+  title: "Events — Kolo Founders Circle",
 };
 
 function EventRow({

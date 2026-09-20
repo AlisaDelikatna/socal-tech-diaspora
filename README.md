@@ -1,6 +1,6 @@
-# SoCal Tech Diaspora — Community Platform (MVP)
+# Kolo Founders Circle — Community Platform (MVP)
 
-A web platform for **SoCal Tech Diaspora**, a community of Ukrainian tech
+A web platform for **Kolo Founders Circle**, a community of Ukrainian tech
 professionals, founders, and newcomers in Southern California.
 
 ## Stack
@@ -59,7 +59,7 @@ npm run db:seed     # optional: seed an admin + sample members/event
 The seed creates an admin login:
 
 ```
-admin@socaltechdiaspora.org  /  password123
+admin@kolofounders.com  /  password123
 ```
 
 **Change this password** (or delete the seed user) before going live.

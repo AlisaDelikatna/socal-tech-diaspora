@@ -16,17 +16,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SoCal Tech Diaspora — Ukrainian tech community in Southern California",
+  metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
+  title: "Kolo Founders Circle — Ukrainian founders in Southern California",
   description:
-    "Professional network of Ukrainian-rooted founders, entrepreneurs, investors, and techies in Southern California.",
-  icons: {
-    icon: [
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-    ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180" },
-    ],
+    "Where Ukrainian founders, builders, and newcomers in Southern California stand in circle, grow together, and build something greater than any one of them.",
+  openGraph: {
+    title: "Kolo Founders Circle",
+    description:
+      "Ukrainian founders, builders, and newcomers in Southern California — standing in circle, growing together.",
+    siteName: "Kolo Founders Circle",
+    type: "website",
   },
+  twitter: {
+    card: "summary_large_image",
+    title: "Kolo Founders Circle",
+    description:
+      "Ukrainian founders, builders, and newcomers in Southern California — standing in circle, growing together.",
+  },
+  // Favicon is provided by app/icon.svg (Next.js file convention).
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

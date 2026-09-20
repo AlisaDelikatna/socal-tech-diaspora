@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import ResetPasswordForm from "./ResetPasswordForm";
 
 export const metadata = {
-  title: "Set a new password — SoCal Tech Diaspora",
+  title: "Set a new password — Kolo Founders Circle",
 };
 
 export default function ResetPasswordPage() {

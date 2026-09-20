@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import ProfileForm from "./ProfileForm";
 
 export const metadata = {
-  title: "Your profile — SoCal Tech Diaspora",
+  title: "Your profile — Kolo Founders Circle",
 };
 
 export default async function ProfilePage() {

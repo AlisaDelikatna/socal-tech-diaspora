@@ -8,16 +8,16 @@ async function main() {
 
   // Admin / organizer account.
   const admin = await prisma.user.upsert({
-    where: { email: "admin@socaltechdiaspora.org" },
+    where: { email: "admin@kolofounders.com" },
     update: {},
     create: {
       name: "Community Organizer",
-      email: "admin@socaltechdiaspora.org",
+      email: "admin@kolofounders.com",
       passwordHash: password,
       linkedinUrl: "https://linkedin.com/in/organizer",
       title: "Community Lead",
-      company: "SoCal Tech Diaspora",
-      bio: "Building the SoCal Ukrainian tech community.",
+      company: "Kolo Founders Circle",
+      bio: "Building Kolo Founders Circle — the Ukrainian tech circle in Southern California.",
       whatINeed: "Volunteers and event hosts",
       howICanHelp: "Connecting members, organizing events",
       tags: ["community", "events"],
@@ -81,12 +81,12 @@ async function main() {
 
   // A sample upcoming event.
   const existing = await prisma.event.findFirst({
-    where: { title: "SoCal Ukrainian Tech Mixer" },
+    where: { title: "Kolo Ukrainian Tech Mixer" },
   });
   if (!existing) {
     await prisma.event.create({
       data: {
-        title: "SoCal Ukrainian Tech Mixer",
+        title: "Kolo Ukrainian Tech Mixer",
         description:
           "Casual evening meetup for founders, engineers, and newcomers. Drinks, intros, and good company. Bring a friend!",
         dateTime: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14), // +2 weeks
@@ -97,7 +97,7 @@ async function main() {
   }
 
   console.log("Seed complete.");
-  console.log("Admin login: admin@socaltechdiaspora.org / password123");
+  console.log("Admin login: admin@kolofounders.com / password123");
 }
 
 main()

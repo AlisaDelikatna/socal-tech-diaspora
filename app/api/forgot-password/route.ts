@@ -29,12 +29,12 @@ export async function POST(req: NextRequest) {
 
     await sendEmail({
       to: email,
-      subject: "Reset your SoCal Tech Diaspora password",
+      subject: "Reset your Kolo Founders Circle password",
       html: emailLayout(`
         <p>Hi ${user.name.split(" ")[0]},</p>
         <p>We received a request to reset your password. Click below to set a new one. This link expires in 1 hour.</p>
         <p style="margin: 24px 0;">
-          <a href="${resetUrl}" style="background:#2563eb;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Reset password</a>
+          <a href="${resetUrl}" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Reset password</a>
         </p>
         <p>If you didn't request this, you can safely ignore this email.</p>
       `),

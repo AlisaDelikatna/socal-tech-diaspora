@@ -41,11 +41,12 @@ export default async function HomePage() {
         />
         <div className="mx-auto max-w-6xl px-4 py-20 sm:py-28 text-center">
           <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight">
-            SoCal Tech <span className="text-brand">Diaspora</span>
+            Kolo Founders <span className="text-brand">Circle</span>
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-xl text-foreground/80 font-medium">
-            Professional network of Ukrainian-rooted founders, entrepreneurs,
-            investors, and techies in Southern California.
+            Where founders, builders, and entrepreneurs in Southern California
+            stand in circle, grow together, and build something none of them
+            could build alone.
           </p>
           <div className="mt-8 flex items-center justify-center gap-3">
             <LinkButton href="/join">Become a Member</LinkButton>
@@ -142,7 +143,7 @@ export default async function HomePage() {
       <section className="mx-auto max-w-6xl px-4 py-16">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {[
-            ["Svoi — Our People", "We show up for each other first."],
+            ["Our People", "We show up for each other first."],
             ["Growth Without Gatekeeping", "We don't hoard access."],
             ["Rooted, Not Isolated", "A bridge to Ukrainian identity."],
             ["Open Door for Newcomers", "There's a seat at the table."],

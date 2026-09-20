@@ -6,7 +6,7 @@ import EventManager from "./EventManager";
 import ResourceManager from "./ResourceManager";
 
 export const metadata = {
-  title: "Admin — SoCal Tech Diaspora",
+  title: "Admin — Kolo Founders Circle",
 };
 
 export default async function AdminPage() {

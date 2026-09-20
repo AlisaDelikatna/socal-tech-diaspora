@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import JoinForm from "./JoinForm";
 
 export const metadata = {
-  title: "Become a Member — SoCal Tech Diaspora",
+  title: "Become a Member — Kolo Founders Circle",
 };
 
 export default function JoinPage() {

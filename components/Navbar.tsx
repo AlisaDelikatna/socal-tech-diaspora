@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Image from "next/image";
 import { auth, signOut } from "@/auth";
 import ResourcesDropdown from "./ResourcesDropdown";
+import Logo from "./Logo";
 
 export default async function Navbar() {
   const session = await auth();
@@ -11,15 +11,8 @@ export default async function Navbar() {
   return (
     <header className="border-b border-border bg-white/80 backdrop-blur sticky top-0 z-40">
       <nav className="mx-auto max-w-6xl px-4 h-16 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center shrink-0">
-          <Image
-            src="/logo.png"
-            alt="SoCal Tech Diaspora"
-            width={180}
-            height={40}
-            className="h-10 w-auto object-contain"
-            priority
-          />
+        <Link href="/" className="flex items-center shrink-0" aria-label="Kolo Founders Circle — home">
+          <Logo className="h-9" />
         </Link>
 
         <div className="hidden md:flex items-center gap-6 text-sm">

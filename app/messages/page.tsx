@@ -5,7 +5,7 @@ import { getConversations } from "@/lib/messages";
 import MemberAvatar from "@/components/MemberAvatar";
 
 export const metadata = {
-  title: "Messages — SoCal Tech Diaspora",
+  title: "Messages — Kolo Founders Circle",
 };
 
 export default async function MessagesPage() {

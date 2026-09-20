@@ -6,7 +6,7 @@ import MembersFilter from "./MembersFilter";
 import type { Prisma } from "@prisma/client";
 
 export const metadata = {
-  title: "Members — SoCal Tech Diaspora",
+  title: "Members — Kolo Founders Circle",
 };
 
 // Members-only directory (enforced by proxy.ts). searchParams is async in Next 16.

@@ -4,11 +4,12 @@
   --background: #ffffff;
   --foreground: #171717;
 
-  /* Brand palette — a warm blue with a restrained Ukrainian nod
-     (blue/gold accents used sparingly, not literally). */
-  --brand: #0057B7;
-  --brand-dark: #004494;
-  --accent: #FFD700;
+  /* Kolo brand palette — a deep, editorial blue and a warm wheat/gold.
+     A muted nod to Ukrainian blue-and-gold, deliberately not the literal
+     flag split. Used by the Logo marks (var(--brand) / var(--accent)). */
+  --brand: #223A5E;
+  --brand-dark: #172A44;
+  --accent: #C69A3E;
   --muted: #6b7280;
   --surface: #f8fafc;
   --border: #e5e7eb;

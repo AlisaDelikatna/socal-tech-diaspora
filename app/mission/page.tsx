@@ -1,12 +1,12 @@
 import { LinkButton } from "@/components/ui";
 
 export const metadata = {
-  title: "Mission & Values — SoCal Tech Diaspora",
+  title: "Mission & Values — Kolo Founders Circle",
 };
 
 const values = [
   {
-    title: "Svoi — “Our People”",
+    title: "Our People",
     body: "We show up for each other first — sharing referrals, advice, and a soft landing, simply because that's who we are.",
   },
   {
@@ -30,8 +30,9 @@ export default function MissionPage() {
         Our Mission
       </span>
       <h1 className="mt-2 text-3xl sm:text-4xl font-extrabold">
-        Uniting Ukrainian tech talent in Southern California — professionally
-        and culturally.
+        Kolo Founders Circle unites Ukrainian tech professionals, founders, and
+        newcomers in Southern California to grow together — professionally,
+        culturally, and as a community that has each other&apos;s back.
       </h1>
 
       <h2 className="mt-14 text-2xl font-bold">Our Values</h2>
@@ -45,6 +46,16 @@ export default function MissionPage() {
             <p className="mt-2 text-muted">{v.body}</p>
           </div>
         ))}
+      </div>
+
+      <div className="mt-14 rounded-2xl border border-border bg-white p-8">
+        <h2 className="text-xl font-bold">Why &ldquo;Kolo&rdquo;</h2>
+        <p className="mt-3 text-muted leading-relaxed">
+          Kolo means circle. In vyshyvanka — Ukrainian embroidery — a single
+          cross-stitch is almost nothing on its own. Repeated thousands of
+          times, it becomes a pattern that tells you where someone is from. One
+          founder is one stitch. This community is the pattern we make together.
+        </p>
       </div>
 
       <div className="mt-14 text-center rounded-2xl bg-surface p-10">

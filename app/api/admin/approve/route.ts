@@ -37,14 +37,14 @@ export async function POST(req: NextRequest) {
   const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
   await sendEmail({
     to: user.email,
-    subject: "You're in — welcome to SoCal Tech Diaspora",
+    subject: "You're in — welcome to Kolo Founders Circle",
     html: emailLayout(`
       <p>Hi ${user.name.split(" ")[0]},</p>
       <p>Your membership has been approved 🎉 You can now log in, complete your profile, connect with members, and RSVP to events.</p>
       <p style="margin: 20px 0;">
-        <a href="${base}/login" style="background:#2563eb;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Log in</a>
+        <a href="${base}/login" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Log in</a>
       </p>
-      <p>Welcome to the community. Svoi.</p>
+      <p>You&rsquo;re now part of the circle.</p>
     `),
   });
 

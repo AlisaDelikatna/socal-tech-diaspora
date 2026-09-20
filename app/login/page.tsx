@@ -3,7 +3,7 @@ import Link from "next/link";
 import LoginForm from "./LoginForm";
 
 export const metadata = {
-  title: "Log in — SoCal Tech Diaspora",
+  title: "Log in — Kolo Founders Circle",
 };
 
 export default function LoginPage() {

@@ -63,12 +63,12 @@ export async function POST(req: NextRequest) {
   // Confirmation email to the applicant.
   await sendEmail({
     to: email,
-    subject: "Welcome to SoCal Tech Diaspora — application received",
+    subject: "Welcome to Kolo Founders Circle — application received",
     html: emailLayout(`
       <p>Hi ${user.name.split(" ")[0]},</p>
-      <p>Thanks for applying to join <strong>SoCal Tech Diaspora</strong>. We've received your application and a community organizer will review it shortly.</p>
+      <p>Thanks for applying to join <strong>Kolo Founders Circle</strong>. We've received your application and a community organizer will review it shortly.</p>
       <p>You'll get another email once your account is approved — then you can log in, complete your profile, connect with members, and RSVP to events.</p>
-      <p>Glad to have you. Svoi means we've got your back.</p>
+      <p>Glad to have you. We've got your back.</p>
     `),
   });
 

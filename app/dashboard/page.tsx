@@ -7,7 +7,7 @@ import MemberAvatar from "@/components/MemberAvatar";
 import ReferralLink from "./ReferralLink";
 
 export const metadata = {
-  title: "Dashboard — SoCal Tech Diaspora",
+  title: "Dashboard — Kolo Founders Circle",
 };
 
 export default async function DashboardPage() {
