@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+import { formatEventDate } from "@/lib/time";
 import { auth } from "@/auth";
 import MemberAvatar from "@/components/MemberAvatar";
 import RsvpButton from "./RsvpButton";
@@ -43,14 +44,14 @@ export default async function EventDetailPage({
 
       <div className="mt-4 rounded-2xl border border-border bg-white p-8">
         <div className="text-sm font-semibold text-accent uppercase tracking-wide">
-          {date.toLocaleDateString("en-US", {
+          {formatEventDate(date, {
             weekday: "long",
             month: "long",
             day: "numeric",
             year: "numeric",
           })}{" "}
           ·{" "}
-          {date.toLocaleTimeString([], {
+          {formatEventDate(date, {
             hour: "2-digit",
             minute: "2-digit",
           })}

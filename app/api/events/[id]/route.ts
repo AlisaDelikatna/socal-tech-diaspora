@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { eventSchema } from "@/lib/validations";
+import { parseEventInput } from "@/lib/time";
 
 // PUT — update an event (admin only).
 export async function PUT(
@@ -27,7 +28,7 @@ export async function PUT(
       data: {
         title: d.title,
         description: d.description,
-        dateTime: new Date(d.dateTime),
+        dateTime: parseEventInput(d.dateTime),
         address: d.address,
       },
     });

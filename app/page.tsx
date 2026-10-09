@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { formatEventDate } from "@/lib/time";
 import { LinkButton, Card, Tag } from "@/components/ui";
 import MemberAvatar from "@/components/MemberAvatar";
 
@@ -89,7 +90,7 @@ export default async function HomePage() {
           <Card className="flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
             <div>
               <div className="text-xs uppercase tracking-wide text-accent font-semibold">
-                {new Date(upcomingEvent.dateTime).toLocaleDateString("en-US", {
+                {formatEventDate(upcomingEvent.dateTime, {
                   weekday: "long",
                   month: "long",
                   day: "numeric",

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { formatEventDate } from "@/lib/time";
 import { Card, LinkButton } from "@/components/ui";
 
 export const metadata = {
@@ -24,10 +25,10 @@ function EventRow({
       <div className="flex gap-4">
         <div className="text-center shrink-0 w-14">
           <div className="text-xs uppercase text-accent font-semibold">
-            {date.toLocaleDateString("en-US", { month: "short" })}
+            {formatEventDate(date, { month: "short" })}
           </div>
           <div className="text-2xl font-extrabold leading-none">
-            {date.getDate()}
+            {formatEventDate(date, { day: "numeric" })}
           </div>
         </div>
         <div>
@@ -38,7 +39,7 @@ function EventRow({
             {event.title}
           </Link>
           <p className="text-sm text-muted mt-0.5">
-            {date.toLocaleTimeString([], {
+            {formatEventDate(date, {
               hour: "2-digit",
               minute: "2-digit",
             })}{" "}

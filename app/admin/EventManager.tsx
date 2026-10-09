@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, Button, Input, Textarea, Field } from "@/components/ui";
+import { formatEventDate, toEventInput } from "@/lib/time";
 
 type Attendee = {
   id: string;
@@ -21,15 +22,6 @@ type EventItem = {
   rsvpCount: number;
   attendees: Attendee[];
 };
-
-// Convert an ISO string to the value format datetime-local expects.
-function toLocalInput(iso: string) {
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(
-    d.getHours()
-  )}:${pad(d.getMinutes())}`;
-}
 
 export default function EventManager({ events }: { events: EventItem[] }) {
   const router = useRouter();
@@ -85,7 +77,7 @@ export default function EventManager({ events }: { events: EventItem[] }) {
             name="dateTime"
             type="datetime-local"
             required
-            defaultValue={item ? toLocalInput(item.dateTime) : ""}
+            defaultValue={item ? toEventInput(item.dateTime) : ""}
           />
         </Field>
         <Field label="Address" required>
@@ -144,7 +136,11 @@ export default function EventManager({ events }: { events: EventItem[] }) {
                   <div>
                     <div className="font-semibold">{e.title}</div>
                     <div className="text-sm text-muted">
-                      {new Date(e.dateTime).toLocaleString()} · {e.address}
+                      {formatEventDate(e.dateTime, {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })}{" "}
+                      · {e.address}
                     </div>
                     <button
                       type="button"

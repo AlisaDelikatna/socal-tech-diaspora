@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, emailLayout } from "@/lib/email";
+import { formatEventDate } from "@/lib/time";
 
 // POST { eventId } — RSVP to an event. DELETE { eventId } — cancel RSVP.
 export async function POST(req: NextRequest) {
@@ -36,7 +37,7 @@ export async function POST(req: NextRequest) {
     html: emailLayout(`
       <p>You're confirmed for <strong>${event.title}</strong>.</p>
       <ul>
-        <li><strong>When:</strong> ${date.toLocaleString("en-US", {
+        <li><strong>When:</strong> ${formatEventDate(date, {
           weekday: "long",
           month: "long",
           day: "numeric",

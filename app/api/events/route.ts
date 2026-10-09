@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { eventSchema } from "@/lib/validations";
+import { parseEventInput } from "@/lib/time";
 
 // POST — create an event (admin only).
 export async function POST(req: NextRequest) {
@@ -24,7 +25,7 @@ export async function POST(req: NextRequest) {
     data: {
       title: d.title,
       description: d.description,
-      dateTime: new Date(d.dateTime),
+      dateTime: parseEventInput(d.dateTime),
       address: d.address,
       createdByUserId: session.user.id,
     },
