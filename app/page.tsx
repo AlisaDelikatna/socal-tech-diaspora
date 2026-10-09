@@ -1,5 +1,7 @@
 import Link from "next/link";
+import Image from "next/image";
 import { prisma } from "@/lib/prisma";
+import { founders } from "@/lib/founders";
 import { formatEventDate } from "@/lib/time";
 import { LinkButton, Card, Tag } from "@/components/ui";
 import MemberAvatar from "@/components/MemberAvatar";
@@ -81,6 +83,36 @@ export default async function HomePage() {
             Read our mission &amp; values →
           </Link>
         </Card>
+      </section>
+
+      {/* Founders */}
+      <section className="mx-auto max-w-6xl px-4 py-10">
+        <h2 className="text-2xl font-bold mb-8 text-center">
+          Meet the Founders
+        </h2>
+        <div className="flex flex-wrap justify-center gap-x-16 gap-y-10">
+          {founders.map((f) => (
+            <a
+              key={f.name}
+              href={f.linkedinUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex w-56 flex-col items-center text-center"
+            >
+              <Image
+                src={f.photo}
+                alt={f.name}
+                width={176}
+                height={176}
+                className="h-44 w-44 rounded-full object-cover ring-4 ring-brand/15 transition group-hover:ring-brand/40"
+              />
+              <h3 className="mt-4 text-lg font-semibold group-hover:text-brand">
+                {f.name}
+              </h3>
+              <p className="mt-1 text-sm text-muted">{f.headline}</p>
+            </a>
+          ))}
+        </div>
       </section>
 
       {/* Upcoming event */}
