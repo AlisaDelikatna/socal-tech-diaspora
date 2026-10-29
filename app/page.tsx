@@ -57,11 +57,13 @@ export default async function HomePage() {
               See Events
             </LinkButton>
           </div>
-          {memberCount > 0 && (
+          {/* Only show the count once it's a strong signal; rounded down to
+              the nearest hundred ("over 100", "over 200", ...). */}
+          {memberCount > 100 && (
             <p className="mt-6 text-sm text-muted">
-              Join{" "}
+              Join over{" "}
               <span className="font-semibold text-foreground">
-                {memberCount}
+                {Math.floor(memberCount / 100) * 100}
               </span>{" "}
               members already building together.
             </p>
