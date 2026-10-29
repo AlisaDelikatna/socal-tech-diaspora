@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Card, Button, Input, Textarea, Field } from "@/components/ui";
 import { formatEventDate, toEventInput } from "@/lib/time";
+import MemberInvitePanel, { type InviteMember } from "./MemberInvitePanel";
 
 type Attendee = {
   id: string;
@@ -24,15 +25,47 @@ type EventItem = {
   capacity: number | null;
   rsvpCount: number;
   attendees: Attendee[];
+  invitedAt: string | null;
+  inviteCount: number;
+  reminderSentAt: string | null;
 };
 
-export default function EventManager({ events }: { events: EventItem[] }) {
+export default function EventManager({
+  events,
+  members,
+}: {
+  events: EventItem[];
+  members: InviteMember[];
+}) {
   const router = useRouter();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [rsvpOpenId, setRsvpOpenId] = useState<string | null>(null);
+  // Which event's email panel is open, and for what.
+  const [panel, setPanel] = useState<{ id: string; kind: "invite" | "remind" } | null>(null);
+  const [inviteMessage, setInviteMessage] = useState<{ id: string; text: string } | null>(null);
+
+  function togglePanel(id: string, kind: "invite" | "remind") {
+    setPanel(panel?.id === id && panel.kind === kind ? null : { id, kind });
+  }
+
+  // Attendees in the shape the email panel expects, with role/industry
+  // details from the member list when available.
+  function attendeeRecipients(e: EventItem): InviteMember[] {
+    return e.attendees.map(
+      (a) =>
+        members.find((m) => m.id === a.id) ?? {
+          id: a.id,
+          name: a.name,
+          title: a.title,
+          company: a.company,
+          role: null,
+          industries: [],
+        }
+    );
+  }
 
   async function save(e: React.FormEvent<HTMLFormElement>, id?: string) {
     e.preventDefault();
@@ -184,6 +217,18 @@ export default function EventManager({ events }: { events: EventItem[] }) {
                     </button>
                   </div>
                   <div className="flex gap-2">
+                    {new Date(e.dateTime) > new Date() && (
+                      <>
+                        <Button onClick={() => togglePanel(e.id, "invite")}>
+                          {e.invitedAt ? "Invite again" : "Invite members"}
+                        </Button>
+                        {e.rsvpCount > 0 && (
+                          <Button variant="outline" onClick={() => togglePanel(e.id, "remind")}>
+                            Send reminder
+                          </Button>
+                        )}
+                      </>
+                    )}
                     <Button variant="outline" onClick={() => setEditingId(e.id)}>
                       Edit
                     </Button>
@@ -196,6 +241,39 @@ export default function EventManager({ events }: { events: EventItem[] }) {
                     </Button>
                   </div>
                 </div>
+
+                {(e.invitedAt || e.reminderSentAt) && (
+                  <p className="mt-1 text-xs text-muted">
+                    {[
+                      e.invitedAt &&
+                        `Invite sent to ${e.inviteCount} members on ${formatEventDate(e.invitedAt, { month: "short", day: "numeric" })}`,
+                      e.reminderSentAt &&
+                        `Reminder sent ${formatEventDate(e.reminderSentAt, { month: "short", day: "numeric" })}`,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
+                {panel?.id === e.id && (
+                  <MemberInvitePanel
+                    key={panel.kind}
+                    endpoint={`/api/admin/events/${e.id}/${panel.kind}`}
+                    what={panel.kind === "invite" ? "event invite" : "reminder"}
+                    members={panel.kind === "invite" ? members : attendeeRecipients(e)}
+                    alreadyIn={panel.kind === "invite" ? e.attendees.map((a) => a.id) : []}
+                    alreadyInLabel="Already going"
+                    showFilters={panel.kind === "invite"}
+                    onCancel={() => setPanel(null)}
+                    onSent={(text) => {
+                      setPanel(null);
+                      setInviteMessage({ id: e.id, text });
+                      router.refresh();
+                    }}
+                  />
+                )}
+                {inviteMessage?.id === e.id && (
+                  <p className="mt-3 text-sm text-brand">{inviteMessage.text}</p>
+                )}
 
                 {rsvpOpenId === e.id && e.attendees.length > 0 && (
                   <div className="mt-3 border-t border-border pt-3">

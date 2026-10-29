@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { REPLY_TO } from "@/lib/email-config";
 
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.EMAIL_FROM ?? "Kolo Founders Circle <onboarding@resend.dev>";
@@ -27,7 +28,7 @@ export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promi
   }
 
   try {
-    const { error } = await resend.emails.send({ from, to, subject, html, replyTo });
+    const { error } = await resend.emails.send({ from, to, subject, html, replyTo: replyTo ?? REPLY_TO });
     if (error) {
       console.error("[email] send failed:", error);
       return false;
@@ -59,7 +60,7 @@ export async function sendBulkEmail(
     const chunk = messages.slice(i, i + 100);
     try {
       const { data, error } = await resend.batch.send(
-        chunk.map((m) => ({ from, ...m }))
+        chunk.map((m) => ({ from, replyTo: REPLY_TO, ...m }))
       );
       if (error) {
         console.error("[email] batch send failed:", error);

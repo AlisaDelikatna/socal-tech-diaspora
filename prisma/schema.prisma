@@ -83,6 +83,11 @@ model Event {
   publicLocation       String?
   // Max RSVPs; null means unlimited.
   capacity             Int?
+  // Last time the invite went out to members, and to how many.
+  invitedAt            DateTime?
+  inviteCount          Int                  @default(0)
+  // Last reminder sent to people who RSVP'd.
+  reminderSentAt       DateTime?
   createdByUserId      String
   createdBy            User                 @relation("CreatedEvents", fields: [createdByUserId], references: [id], onDelete: Cascade)
   rsvps                Rsvp[]

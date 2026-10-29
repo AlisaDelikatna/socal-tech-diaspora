@@ -5,7 +5,7 @@ import { sendBulkEmail, emailLayout, escapeHtml, textToHtml } from "@/lib/email"
 import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 
 // POST { userIds, note? } — email the chosen approved members about a speaker
-// opportunity (admin only). Replies go to the admin who sent it.
+// opportunity (admin only). Replies go to REPLY_TO (lib/email.ts).
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -55,7 +55,6 @@ export async function POST(
   const { sent, error } = await sendBulkEmail(
     members.map((m) => ({
       to: m.email,
-      replyTo: session.user.email ?? undefined,
       subject: `We're looking for a speaker: ${opp.topic}`,
       html: emailLayout(`
         <p>Hi ${escapeHtml(m.name.split(" ")[0])},</p>

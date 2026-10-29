@@ -77,6 +77,15 @@ export default async function AdminPage() {
     }),
   ]);
 
+  const inviteMembers = members.map((m) => ({
+    id: m.id,
+    name: m.name,
+    title: m.title,
+    company: m.company,
+    role: m.role,
+    industries: m.industries,
+  }));
+
   const shortDate = (d: Date) =>
     formatEventDate(d, { month: "long", day: "numeric" });
 
@@ -104,6 +113,7 @@ export default async function AdminPage() {
       <section>
         <h2 className="text-xl font-bold mb-4">Events</h2>
         <EventManager
+          members={inviteMembers}
           events={events.map((e) => ({
             id: e.id,
             title: e.title,
@@ -114,6 +124,9 @@ export default async function AdminPage() {
             publicLocation: e.publicLocation,
             capacity: e.capacity,
             rsvpCount: e._count.rsvps,
+            invitedAt: e.invitedAt?.toISOString() ?? null,
+            inviteCount: e.inviteCount,
+            reminderSentAt: e.reminderSentAt?.toISOString() ?? null,
             attendees: e.rsvps.map((r) => ({
               id: r.user.id,
               name: r.user.name,
@@ -132,14 +145,7 @@ export default async function AdminPage() {
           recommend someone, then accept, sideline, or reply to candidates.
         </p>
         <SpeakerManager
-          members={members.map((m) => ({
-            id: m.id,
-            name: m.name,
-            title: m.title,
-            company: m.company,
-            role: m.role,
-            industries: m.industries,
-          }))}
+          members={inviteMembers}
           events={events
             .filter((e) => e.dateTime >= new Date())
             .map((e) => ({ id: e.id, title: e.title, date: shortDate(e.dateTime) }))}

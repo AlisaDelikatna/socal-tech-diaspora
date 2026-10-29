@@ -5,7 +5,7 @@ import { speakerReplySchema } from "@/lib/validations";
 import { sendEmail, emailLayout, textToHtml } from "@/lib/email";
 
 // POST { subject, body } — email a speaker candidate from the admin dashboard
-// (admin only). The candidate's reply goes straight to the admin's inbox.
+// (admin only). The candidate's reply goes to REPLY_TO (lib/email.ts).
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -29,7 +29,6 @@ export async function POST(
 
   const ok = await sendEmail({
     to: app.candidateEmail,
-    replyTo: session.user.email ?? undefined,
     subject: parsed.data.subject,
     html: emailLayout(textToHtml(parsed.data.body)),
   });
