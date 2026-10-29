@@ -3,9 +3,11 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBulkEmail, emailLayout, escapeHtml, textToHtml } from "@/lib/email";
 import { formatEventDate, formatEventTimeRange } from "@/lib/time";
+import { resolveGuestEmails } from "@/lib/guest-invites";
+import { FREE_MEMBERSHIP_DEADLINE } from "@/lib/guests";
 
-// POST { userIds, note? } — email the chosen approved members about a speaker
-// opportunity (admin only). Replies go to REPLY_TO (lib/email.ts).
+// POST { userIds, guestEmails?, note? } — email the chosen approved members,
+// and non-members by email address, about a speaker opportunity (admin only). Replies go to REPLY_TO (lib/email.ts).
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -16,12 +18,17 @@ export async function POST(
   }
 
   const { id } = await params;
-  const { note, userIds } = (await req.json().catch(() => ({}))) as {
+  const { note, userIds = [], guestEmails } = (await req.json().catch(() => ({}))) as {
     note?: string;
     userIds?: string[];
+    guestEmails?: string[];
   };
-  if (!Array.isArray(userIds) || userIds.length === 0) {
-    return NextResponse.json({ error: "Choose at least one member" }, { status: 400 });
+  const { guests, skippedExisting, error: guestError } = await resolveGuestEmails(guestEmails);
+  if (guestError) {
+    return NextResponse.json({ error: guestError }, { status: 400 });
+  }
+  if (!Array.isArray(userIds) || (userIds.length === 0 && guests.length === 0)) {
+    return NextResponse.json({ error: "Choose at least one recipient" }, { status: 400 });
   }
 
   const opp = await prisma.speakerOpportunity.findUnique({
@@ -52,24 +59,49 @@ export async function POST(
   })}, ${formatEventTimeRange(date, opp.event.endDateTime)}`;
   const where = opp.event.publicLocation ?? opp.event.address;
 
-  const { sent, error } = await sendBulkEmail(
-    members.map((m) => ({
-      to: m.email,
-      subject: `We're looking for a speaker: ${opp.topic}`,
-      html: emailLayout(`
-        <p>Hi ${escapeHtml(m.name.split(" ")[0])},</p>
-        ${note?.trim() ? textToHtml(note) : ""}
+  const noteHtml = note?.trim() ? textToHtml(note) : "";
+  const slot = `
         <p>We have a speaker spot open at <strong>${escapeHtml(opp.event.title)}</strong> (${when}, ${escapeHtml(where)}).</p>
         <p style="font-size:16px;font-weight:600;margin-bottom:4px;">${escapeHtml(opp.topic)}</p>
-        <div style="color:#374151;">${textToHtml(opp.description)}</div>
+        <div style="color:#374151;">${textToHtml(opp.description)}</div>`;
+
+  const memberEmails = members.map((m) => ({
+    to: m.email,
+    subject: `We're looking for a speaker: ${opp.topic}`,
+    html: emailLayout(`
+        <p>Hi ${escapeHtml(m.name.split(" ")[0])},</p>
+        ${noteHtml}
+        ${slot}
         <p>Would you like to speak, or do you know someone who'd be great? Apply or recommend them here:</p>
         <p style="margin: 20px 0;">
           <a href="${base}/events/${opp.event.id}#speak" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Apply or recommend a speaker</a>
         </p>
         <p style="color:#6b7280;font-size:13px;">You can also just reply to this email.</p>
       `),
-    }))
-  );
+  }));
+
+  // Non-members can't use the apply form, so they reply by email instead.
+  const guestEmailsOut = guests.map((to) => ({
+    to,
+    subject: `Speaking opportunity: ${opp.topic}`,
+    html: emailLayout(`
+        <p>Hi,</p>
+        ${noteHtml}
+        <p>Kolo Founders Circle is a community where founders, builders, and entrepreneurs in Southern California grow together, and we'd love your help with an upcoming event.</p>
+        ${slot}
+        <p><strong>Interested in speaking, or know someone who'd be great?</strong> Just reply to this email with a few lines about the talk.</p>
+        <div style="background:#F0ECE3;border-radius:8px;padding:14px 16px;margin:20px 0;">
+          <p style="margin:0 0 6px;font-weight:600;">Kolo events are for members only.</p>
+          <p style="margin:0;">Membership is <strong>free</strong> for everyone who joins by ${FREE_MEMBERSHIP_DEADLINE}.</p>
+        </div>
+        <p style="margin: 20px 0;">
+          <a href="${base}/join" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Join for free</a>
+        </p>
+        <p style="color:#6b7280;font-size:13px;">You're receiving this because a Kolo organizer invited you; reply if you'd rather not hear from us.</p>
+      `),
+  }));
+
+  const { sent, error } = await sendBulkEmail([...memberEmails, ...guestEmailsOut]);
 
   if (sent === 0) {
     return NextResponse.json(
@@ -83,5 +115,11 @@ export async function POST(
     data: { invitedAt: new Date(), inviteCount: sent },
   });
 
-  return NextResponse.json({ ok: true, sent, total: members.length });
+  return NextResponse.json({
+    ok: true,
+    sent,
+    total: members.length + guests.length,
+    guests: guests.length,
+    skippedExisting,
+  });
 }

@@ -3,9 +3,12 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBulkEmail, emailLayout, escapeHtml, textToHtml } from "@/lib/email";
 import { formatEventDate, formatEventTimeRange } from "@/lib/time";
+import { resolveGuestEmails } from "@/lib/guest-invites";
+import { FREE_MEMBERSHIP_DEADLINE } from "@/lib/guests";
 
-// POST { userIds, note? } — email the chosen approved members an invitation
-// to an event (admin only). Replies go to REPLY_TO (lib/email.ts).
+// POST { userIds, guestEmails?, note? } — email an event invitation to the
+// chosen approved members, and to non-members by email address (admin only).
+// Non-members get a version explaining membership is required and free. Replies go to REPLY_TO (lib/email.ts).
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -16,12 +19,17 @@ export async function POST(
   }
 
   const { id } = await params;
-  const { note, userIds } = (await req.json().catch(() => ({}))) as {
+  const { note, userIds = [], guestEmails } = (await req.json().catch(() => ({}))) as {
     note?: string;
     userIds?: string[];
+    guestEmails?: string[];
   };
-  if (!Array.isArray(userIds) || userIds.length === 0) {
-    return NextResponse.json({ error: "Choose at least one member" }, { status: 400 });
+  const { guests, skippedExisting, error: guestError } = await resolveGuestEmails(guestEmails);
+  if (guestError) {
+    return NextResponse.json({ error: guestError }, { status: 400 });
+  }
+  if (!Array.isArray(userIds) || (userIds.length === 0 && guests.length === 0)) {
+    return NextResponse.json({ error: "Choose at least one recipient" }, { status: 400 });
   }
 
   const event = await prisma.event.findUnique({
@@ -54,27 +62,52 @@ export async function POST(
   const spotsLeft =
     event.capacity != null ? Math.max(event.capacity - event._count.rsvps, 0) : null;
 
-  const { sent, error } = await sendBulkEmail(
-    members.map((m) => ({
-      to: m.email,
-      subject: `You're invited: ${event.title}`,
-      html: emailLayout(`
-        <p>Hi ${escapeHtml(m.name.split(" ")[0])},</p>
-        ${note?.trim() ? textToHtml(note) : ""}
+  const details = `
         <p style="font-size:18px;font-weight:700;margin-bottom:4px;">${escapeHtml(event.title)}</p>
         <ul style="padding-left:18px;">
           <li><strong>When:</strong> ${when}</li>
           <li><strong>Where:</strong> ${where}</li>
           ${spotsLeft != null ? `<li><strong>Spots left:</strong> ${spotsLeft} of ${event.capacity}</li>` : ""}
         </ul>
-        <div style="color:#374151;">${textToHtml(event.description)}</div>
+        <div style="color:#374151;">${textToHtml(event.description)}</div>`;
+  const noteHtml = note?.trim() ? textToHtml(note) : "";
+
+  const memberEmails = members.map((m) => ({
+    to: m.email,
+    subject: `You're invited: ${event.title}`,
+    html: emailLayout(`
+        <p>Hi ${escapeHtml(m.name.split(" ")[0])},</p>
+        ${noteHtml}
+        ${details}
         <p style="margin: 20px 0;">
           <a href="${base}/events/${event.id}" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">RSVP</a>
         </p>
         <p style="color:#6b7280;font-size:13px;">Questions? Just reply to this email.</p>
       `),
-    }))
-  );
+  }));
+
+  const guestEmailsOut = guests.map((to) => ({
+    to,
+    subject: `You're invited: ${event.title}`,
+    html: emailLayout(`
+        <p>Hi,</p>
+        ${noteHtml}
+        <p>You're invited to an upcoming Kolo Founders Circle event, a community where founders, builders, and entrepreneurs in Southern California grow together.</p>
+        ${details}
+        <div style="background:#F0ECE3;border-radius:8px;padding:14px 16px;margin:20px 0;">
+          <p style="margin:0 0 6px;font-weight:600;">This event is for members only.</p>
+          <p style="margin:0;">Membership is <strong>free</strong> for everyone who joins by ${FREE_MEMBERSHIP_DEADLINE}. Apply in a couple of minutes; once you're approved, you can RSVP.</p>
+        </div>
+        <p style="margin: 20px 0;">
+          <a href="${base}/join" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Join for free</a>
+          &nbsp;
+          <a href="${base}/events/${event.id}" style="color:#223A5E;">See the event</a>
+        </p>
+        <p style="color:#6b7280;font-size:13px;">Questions? Just reply to this email. You're receiving this because a Kolo organizer invited you; reply if you'd rather not hear from us.</p>
+      `),
+  }));
+
+  const { sent, error } = await sendBulkEmail([...memberEmails, ...guestEmailsOut]);
 
   if (sent === 0) {
     return NextResponse.json(
@@ -88,5 +121,11 @@ export async function POST(
     data: { invitedAt: new Date(), inviteCount: sent },
   });
 
-  return NextResponse.json({ ok: true, sent, total: members.length });
+  return NextResponse.json({
+    ok: true,
+    sent,
+    total: members.length + guests.length,
+    guests: guests.length,
+    skippedExisting,
+  });
 }

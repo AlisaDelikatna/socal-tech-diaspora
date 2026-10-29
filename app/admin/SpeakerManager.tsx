@@ -227,6 +227,7 @@ function OpportunityCard({ opp, members }: { opp: Opportunity; members: Member[]
         <MemberInvitePanel
           endpoint={`/api/admin/speakers/${opp.id}/invite`}
           what="speaker invite"
+          allowGuests
           members={members}
           onCancel={() => setInviting(false)}
           onSent={(msg) => {

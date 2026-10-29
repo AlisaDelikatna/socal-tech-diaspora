@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button, Field, Textarea } from "@/components/ui";
 import { REPLY_TO } from "@/lib/email-config";
 import { MEMBER_ROLES, INDUSTRIES, inferRoleFromTitle } from "@/lib/member-fields";
+import { parseEmails, FREE_MEMBERSHIP_DEADLINE, MAX_GUESTS_PER_SEND } from "@/lib/guests";
 
 // Pick members to email by role and industry, review the exact recipient
 // list, and send. Shared by event and speaker-opportunity invites.
@@ -54,6 +55,7 @@ export default function MemberInvitePanel({
   alreadyIn = [],
   alreadyInLabel = "",
   showFilters = true,
+  allowGuests = false,
   onCancel,
   onSent,
 }: {
@@ -69,6 +71,9 @@ export default function MemberInvitePanel({
   // Hide the role/industry filters (e.g. when the list is already a fixed
   // group like an event's attendees).
   showFilters?: boolean;
+  // Let the admin add non-members by email; they get a "members only,
+  // membership is free" version of the email.
+  allowGuests?: boolean;
   onCancel: () => void;
   onSent: (message: string) => void;
 }) {
@@ -79,6 +84,9 @@ export default function MemberInvitePanel({
   // Members unchecked by hand, kept across filter changes.
   const [excluded, setExcluded] = useState<Set<string>>(() => new Set(alreadyIn));
   const [note, setNote] = useState("");
+  const [guests, setGuests] = useState<string[]>([]);
+  const [guestInput, setGuestInput] = useState("");
+  const [guestInvalid, setGuestInvalid] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -126,14 +134,34 @@ export default function MemberInvitePanel({
     });
   }
 
+  // Accepts one address or a pasted list (commas, spaces or new lines).
+  function addGuests() {
+    const { valid, invalid } = parseEmails(guestInput);
+    setGuests((cur) => [...cur, ...valid.filter((e) => !cur.includes(e))]);
+    setGuestInvalid(invalid);
+    setGuestInput("");
+  }
+
+  const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const summary = [
+    recipients.length > 0 || guests.length === 0 ? plural(recipients.length, "member") : null,
+    guests.length > 0 ? plural(guests.length, "non-member") : null,
+  ]
+    .filter(Boolean)
+    .join(" + ");
+
   async function send() {
-    if (!window.confirm(`Email this ${what} to ${recipients.length} member${recipients.length === 1 ? "" : "s"}?`)) return;
+    if (!window.confirm(`Email this ${what} to ${summary}?`)) return;
     setBusy(true);
     setError(null);
     const res = await fetch(endpoint, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ note, userIds: recipients.map((m) => m.id) }),
+      body: JSON.stringify({
+        note,
+        userIds: recipients.map((m) => m.id),
+        guestEmails: allowGuests ? guests : [],
+      }),
     });
     const ok = res.ok;
     const data = await res.json().catch(() => ({}));
@@ -142,10 +170,13 @@ export default function MemberInvitePanel({
       setError(data.error ?? "Couldn't send the invites.");
       return;
     }
+    const skipped = data.skippedExisting
+      ? ` ${plural(data.skippedExisting, "address")} already had an account and ${data.skippedExisting === 1 ? "was" : "were"} skipped.`
+      : "";
     onSent(
-      data.sent === data.total
-        ? `Sent to ${data.sent} members.`
-        : `Sent to ${data.sent} of ${data.total} members. Check the email settings.`
+      (data.sent === data.total
+        ? `Sent to ${`${data.sent} ${data.sent === 1 ? "person" : "people"}`}.`
+        : `Sent to ${data.sent} of ${data.total}. Check the email settings.`) + skipped
     );
   }
 
@@ -231,6 +262,72 @@ export default function MemberInvitePanel({
         )}
       </div>
 
+      {allowGuests && (
+        <div>
+          <div className="text-sm font-medium mb-1.5">Non-members</div>
+          <div className="flex gap-2 items-start">
+            <Textarea
+              rows={guestInput.includes("\n") ? 4 : 1}
+              value={guestInput}
+              onChange={(e) => setGuestInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  addGuests();
+                }
+              }}
+              placeholder="name@example.com, or paste a list"
+              aria-label="Non-member emails"
+            />
+            <Button type="button" variant="outline" onClick={addGuests} disabled={!guestInput.trim()}>
+              Add
+            </Button>
+          </div>
+          <p className="mt-1 text-xs text-muted">
+            Add one email or paste many. They get a version explaining Kolo is
+            members-only and membership is free for anyone who joins by{" "}
+            {FREE_MEMBERSHIP_DEADLINE}. Anyone who already has an account is skipped.
+          </p>
+          {guestInvalid.length > 0 && (
+            <p className="mt-1 text-xs text-red-600">
+              Not valid emails, skipped: {guestInvalid.join(", ")}
+            </p>
+          )}
+          {guests.length > MAX_GUESTS_PER_SEND && (
+            <p className="mt-1 text-xs text-red-600">
+              Up to {MAX_GUESTS_PER_SEND} non-members per send.
+            </p>
+          )}
+          {guests.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {guests.map((g) => (
+                <span
+                  key={g}
+                  className="inline-flex items-center gap-1 rounded-full border border-border bg-white px-2.5 py-0.5 text-xs"
+                >
+                  {g}
+                  <button
+                    type="button"
+                    onClick={() => setGuests((cur) => cur.filter((x) => x !== g))}
+                    className="text-muted hover:text-red-600"
+                    aria-label={`Remove ${g}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              <button
+                type="button"
+                onClick={() => setGuests([])}
+                className="text-xs text-brand hover:underline"
+              >
+                Clear all
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       <Field
         label="Personal note (optional)"
         hint={`Added at the top of the email. Each person gets their own copy; replies go to ${REPLY_TO}.`}
@@ -239,8 +336,15 @@ export default function MemberInvitePanel({
       </Field>
       {error && <p className="text-sm text-red-600">{error}</p>}
       <div className="flex gap-2">
-        <Button onClick={send} disabled={busy || recipients.length === 0}>
-          {busy ? "Sending..." : `Send to ${recipients.length} member${recipients.length === 1 ? "" : "s"}`}
+        <Button
+          onClick={send}
+          disabled={
+            busy ||
+            (recipients.length === 0 && guests.length === 0) ||
+            guests.length > MAX_GUESTS_PER_SEND
+          }
+        >
+          {busy ? "Sending..." : `Send to ${summary}`}
         </Button>
         <Button variant="ghost" onClick={onCancel}>
           Cancel

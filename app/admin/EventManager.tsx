@@ -263,6 +263,7 @@ export default function EventManager({
                     alreadyIn={panel.kind === "invite" ? e.attendees.map((a) => a.id) : []}
                     alreadyInLabel="Already going"
                     showFilters={panel.kind === "invite"}
+                    allowGuests={panel.kind === "invite"}
                     onCancel={() => setPanel(null)}
                     onSent={(text) => {
                       setPanel(null);
