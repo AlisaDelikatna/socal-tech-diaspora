@@ -96,6 +96,8 @@ export async function POST(
         </div>
         <p style="margin: 20px 0;">
           <a href="${base}/join" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Join for free</a>
+          &nbsp;
+          <a href="${base}/events/${opp.event.id}" style="color:#223A5E;">See the event</a>
         </p>
         <p style="color:#6b7280;font-size:13px;">You're receiving this because a Kolo organizer invited you; reply if you'd rather not hear from us.</p>
       `),
