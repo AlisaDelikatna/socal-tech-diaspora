@@ -131,7 +131,9 @@ export default async function HomePage() {
               <h3 className="text-lg font-semibold mt-1">
                 {upcomingEvent.title}
               </h3>
-              <p className="text-sm text-muted mt-1">{upcomingEvent.address}</p>
+              <p className="text-sm text-muted mt-1">
+                {upcomingEvent.publicLocation ?? upcomingEvent.address}
+              </p>
             </div>
             <LinkButton href={`/events/${upcomingEvent.id}`} variant="outline">
               View &amp; RSVP

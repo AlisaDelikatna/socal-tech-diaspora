@@ -46,7 +46,13 @@ export const eventSchema = z.object({
   title: z.string().min(2),
   description: z.string().min(2),
   dateTime: z.string().min(1), // ISO string from datetime-local input
+  endDateTime: z.string().optional(),
   address: z.string().min(2),
+  publicLocation: z.string().optional(),
+  capacity: z.preprocess(
+    (v) => (v === "" || v == null ? undefined : Number(v)),
+    z.number().int().positive().optional()
+  ),
 });
 
 export const forgotPasswordSchema = z.object({

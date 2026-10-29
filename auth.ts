@@ -48,6 +48,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (user) {
         token.id = user.id as string;
         token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
+      } else if (token.id) {
+        // Re-read the role so admin grants/revocations apply without re-login.
+        const fresh = await prisma.user
+          .findUnique({
+            where: { id: token.id as string },
+            select: { isAdmin: true },
+          })
+          .catch(() => null);
+        if (fresh) token.isAdmin = fresh.isAdmin;
       }
       return token;
     },

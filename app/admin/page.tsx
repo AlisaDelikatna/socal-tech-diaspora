@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import PendingMembers from "./PendingMembers";
 import EventManager from "./EventManager";
 import ResourceManager from "./ResourceManager";
+import AdminAccess from "./AdminAccess";
 
 export const metadata = {
   title: "Admin — Kolo Founders Circle",
@@ -13,7 +14,7 @@ export default async function AdminPage() {
   const session = await auth();
   if (!session?.user?.isAdmin) redirect("/");
 
-  const [pending, events, resources] = await Promise.all([
+  const [pending, events, resources, members] = await Promise.all([
     prisma.user.findMany({
       where: { isApproved: false },
       orderBy: { createdAt: "asc" },
@@ -48,6 +49,11 @@ export default async function AdminPage() {
       orderBy: { createdAt: "desc" },
       select: { id: true, title: true, description: true, url: true, category: true, subcategory: true },
     }).catch(() => []),
+    prisma.user.findMany({
+      where: { isApproved: true },
+      orderBy: [{ isAdmin: "desc" }, { name: "asc" }],
+      select: { id: true, name: true, email: true, title: true, company: true, isAdmin: true },
+    }),
   ]);
 
   return (
@@ -55,7 +61,7 @@ export default async function AdminPage() {
       <div>
         <h1 className="text-3xl font-extrabold">Admin dashboard</h1>
         <p className="text-muted mt-1">
-          Approve members, manage events, and curate resources.
+          Approve members, manage events and admins, and curate resources.
         </p>
       </div>
 
@@ -79,7 +85,10 @@ export default async function AdminPage() {
             title: e.title,
             description: e.description,
             dateTime: e.dateTime.toISOString(),
+            endDateTime: e.endDateTime?.toISOString() ?? null,
             address: e.address,
+            publicLocation: e.publicLocation,
+            capacity: e.capacity,
             rsvpCount: e._count.rsvps,
             attendees: e.rsvps.map((r) => ({
               id: r.user.id,
@@ -90,6 +99,11 @@ export default async function AdminPage() {
             })),
           }))}
         />
+      </section>
+
+      <section>
+        <h2 className="text-xl font-bold mb-4">Admin access</h2>
+        <AdminAccess members={members} currentUserId={session.user.id} />
       </section>
 
       <section>

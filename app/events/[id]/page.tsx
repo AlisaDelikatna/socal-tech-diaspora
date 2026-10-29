@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { formatEventDate } from "@/lib/time";
+import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 import { auth } from "@/auth";
 import MemberAvatar from "@/components/MemberAvatar";
 import RsvpButton from "./RsvpButton";
@@ -35,6 +35,9 @@ export default async function EventDetailPage({
   const alreadyGoing = session?.user?.id
     ? event.rsvps.some((r) => r.userId === session.user.id)
     : false;
+  const isFull =
+    event.capacity != null && event.rsvps.length >= event.capacity;
+  const addressHidden = !!event.publicLocation && !alreadyGoing;
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-12">
@@ -51,13 +54,17 @@ export default async function EventDetailPage({
             year: "numeric",
           })}{" "}
           ·{" "}
-          {formatEventDate(date, {
-            hour: "2-digit",
-            minute: "2-digit",
-          })}
+          {formatEventTimeRange(date, event.endDateTime)}
         </div>
         <h1 className="mt-2 text-3xl font-extrabold">{event.title}</h1>
-        <p className="mt-2 text-muted">📍 {event.address}</p>
+        <p className="mt-2 text-muted">
+          📍 {addressHidden ? event.publicLocation : event.address}
+        </p>
+        {addressHidden && (
+          <p className="mt-1 text-sm text-muted">
+            The exact address is shared with members after they RSVP.
+          </p>
+        )}
 
         <div className="mt-6 whitespace-pre-line text-foreground/90">
           {event.description}
@@ -66,18 +73,30 @@ export default async function EventDetailPage({
         <div className="mt-8 flex items-center gap-4">
           {isPast ? (
             <span className="text-sm text-muted">This event has ended.</span>
+          ) : isFull && !alreadyGoing ? (
+            <span className="text-sm font-medium text-muted">
+              This event is full.
+            </span>
           ) : isLoggedIn ? (
             <RsvpButton eventId={event.id} initialGoing={alreadyGoing} />
           ) : (
-            <Link
-              href={`/login?callbackUrl=/events/${event.id}`}
-              className="rounded-lg bg-brand text-white px-4 py-2 text-sm font-medium hover:bg-brand-dark"
-            >
-              Log in to RSVP
-            </Link>
+            <div className="flex flex-col gap-1">
+              <Link
+                href={`/login?callbackUrl=/events/${event.id}`}
+                className="rounded-lg bg-brand text-white px-4 py-2 text-sm font-medium hover:bg-brand-dark"
+              >
+                Members: log in to RSVP
+              </Link>
+              <Link href="/join" className="text-xs text-brand hover:underline">
+                Not a member yet? Apply to join
+              </Link>
+            </div>
           )}
           <span className="text-sm text-muted">
             {event.rsvps.length} going
+            {event.capacity != null &&
+              !isFull &&
+              ` · ${event.capacity - event.rsvps.length} spots left`}
           </span>
         </div>
 

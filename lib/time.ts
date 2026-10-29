@@ -64,3 +64,13 @@ export function formatEventDate(
     timeZone: EVENT_TIME_ZONE,
   });
 }
+
+// "06:00 PM" or "06:00 PM – 08:00 PM" when the event has an end time.
+export function formatEventTimeRange(
+  start: Date | string,
+  end?: Date | string | null
+): string {
+  const opts: Intl.DateTimeFormatOptions = { hour: "2-digit", minute: "2-digit" };
+  const from = formatEventDate(start, opts);
+  return end ? `${from} – ${formatEventDate(end, opts)}` : from;
+}

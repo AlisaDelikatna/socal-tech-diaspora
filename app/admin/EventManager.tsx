@@ -18,7 +18,10 @@ type EventItem = {
   title: string;
   description: string;
   dateTime: string;
+  endDateTime: string | null;
   address: string;
+  publicLocation: string | null;
+  capacity: number | null;
   rsvpCount: number;
   attendees: Attendee[];
 };
@@ -80,8 +83,30 @@ export default function EventManager({ events }: { events: EventItem[] }) {
             defaultValue={item ? toEventInput(item.dateTime) : ""}
           />
         </Field>
+        <Field label="End time">
+          <Input
+            name="endDateTime"
+            type="datetime-local"
+            defaultValue={item?.endDateTime ? toEventInput(item.endDateTime) : ""}
+          />
+        </Field>
         <Field label="Address" required>
           <Input name="address" required defaultValue={item?.address} />
+        </Field>
+        <Field label="Public location (hides address until RSVP)">
+          <Input
+            name="publicLocation"
+            placeholder="e.g. Los Angeles"
+            defaultValue={item?.publicLocation ?? ""}
+          />
+        </Field>
+        <Field label="Capacity (leave empty for unlimited)">
+          <Input
+            name="capacity"
+            type="number"
+            min={1}
+            defaultValue={item?.capacity ?? ""}
+          />
         </Field>
         <Field label="Description" required>
           <Textarea
@@ -141,6 +166,7 @@ export default function EventManager({ events }: { events: EventItem[] }) {
                         timeStyle: "short",
                       })}{" "}
                       · {e.address}
+                      {e.publicLocation && ` (public: ${e.publicLocation})`}
                     </div>
                     <button
                       type="button"
@@ -150,7 +176,9 @@ export default function EventManager({ events }: { events: EventItem[] }) {
                       disabled={e.rsvpCount === 0}
                       className="text-xs text-brand hover:underline mt-1 disabled:text-muted disabled:no-underline disabled:cursor-default"
                     >
-                      {e.rsvpCount} {e.rsvpCount === 1 ? "RSVP" : "RSVPs"}
+                      {e.rsvpCount}
+                      {e.capacity != null && ` / ${e.capacity}`}{" "}
+                      {e.rsvpCount === 1 ? "RSVP" : "RSVPs"}
                       {e.rsvpCount > 0 &&
                         (rsvpOpenId === e.id ? " ▲" : " — view ▼")}
                     </button>

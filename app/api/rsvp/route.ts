@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, emailLayout } from "@/lib/email";
-import { formatEventDate } from "@/lib/time";
+import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 
 // POST { eventId } — RSVP to an event. DELETE { eventId } — cancel RSVP.
 export async function POST(req: NextRequest) {
@@ -23,12 +23,26 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Event not found" }, { status: 404 });
   }
 
-  // Idempotent — unique constraint on (eventId, userId).
-  await prisma.rsvp.upsert({
-    where: { eventId_userId: { eventId, userId: session.user.id } },
-    create: { eventId, userId: session.user.id },
-    update: {},
+  const userId = session.user.id;
+  const result = await prisma.$transaction(async (tx) => {
+    const existing = await tx.rsvp.findUnique({
+      where: { eventId_userId: { eventId, userId } },
+    });
+    if (existing) return "already";
+    if (event.capacity != null) {
+      const count = await tx.rsvp.count({ where: { eventId } });
+      if (count >= event.capacity) return "full";
+    }
+    await tx.rsvp.create({ data: { eventId, userId } });
+    return "created";
   });
+
+  if (result === "full") {
+    return NextResponse.json({ error: "This event is full" }, { status: 409 });
+  }
+  if (result === "already") {
+    return NextResponse.json({ ok: true, going: true });
+  }
 
   const date = new Date(event.dateTime);
   await sendEmail({
@@ -41,9 +55,7 @@ export async function POST(req: NextRequest) {
           weekday: "long",
           month: "long",
           day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })}</li>
+        })}, ${formatEventTimeRange(date, event.endDateTime)}</li>
         <li><strong>Where:</strong> ${event.address}</li>
       </ul>
       <p>See you there!</p>

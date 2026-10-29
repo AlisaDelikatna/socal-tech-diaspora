@@ -27,6 +27,9 @@ export default function RsvpButton({
       const data = await res.json();
       setGoing(data.going);
       router.refresh();
+    } else {
+      // e.g. the event filled up since the page loaded
+      router.refresh();
     }
   }
 

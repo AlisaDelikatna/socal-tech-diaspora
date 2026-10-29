@@ -29,7 +29,10 @@ export async function PUT(
         title: d.title,
         description: d.description,
         dateTime: parseEventInput(d.dateTime),
+        endDateTime: d.endDateTime ? parseEventInput(d.endDateTime) : null,
         address: d.address,
+        publicLocation: d.publicLocation?.trim() || null,
+        capacity: d.capacity ?? null,
       },
     });
   } catch (err) {

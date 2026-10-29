@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { formatEventDate } from "@/lib/time";
+import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 import { Card, LinkButton } from "@/components/ui";
 
 export const metadata = {
@@ -15,7 +15,10 @@ function EventRow({
     title: string;
     description: string;
     dateTime: Date;
+    endDateTime: Date | null;
     address: string;
+    publicLocation: string | null;
+    capacity: number | null;
     _count: { rsvps: number };
   };
 }) {
@@ -39,11 +42,8 @@ function EventRow({
             {event.title}
           </Link>
           <p className="text-sm text-muted mt-0.5">
-            {formatEventDate(date, {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}{" "}
-            · {event.address}
+            {formatEventTimeRange(date, event.endDateTime)} ·{" "}
+            {event.publicLocation ?? event.address}
           </p>
           <p className="text-sm text-muted mt-1 line-clamp-2">
             {event.description}
@@ -52,7 +52,13 @@ function EventRow({
       </div>
       <div className="flex flex-col items-end gap-1 shrink-0">
         <LinkButton href={`/events/${event.id}`}>RSVP</LinkButton>
-        <span className="text-xs text-muted">{event._count.rsvps} going</span>
+        <span className="text-xs text-muted">
+          {event.capacity != null && event._count.rsvps >= event.capacity
+            ? "Full"
+            : event.capacity != null
+              ? `${event._count.rsvps} / ${event.capacity} going`
+              : `${event._count.rsvps} going`}
+        </span>
       </div>
     </Card>
   );

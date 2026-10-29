@@ -68,7 +68,12 @@ model Event {
   title           String
   description     String
   dateTime        DateTime
+  endDateTime     DateTime?
   address         String
+  // When set, shown instead of the address until the viewer RSVPs.
+  publicLocation  String?
+  // Max RSVPs; null means unlimited.
+  capacity        Int?
   createdByUserId String
   createdBy       User     @relation("CreatedEvents", fields: [createdByUserId], references: [id], onDelete: Cascade)
   rsvps           Rsvp[]

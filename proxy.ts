@@ -10,7 +10,6 @@ const ADMIN_PREFIXES = ["/admin"];
 export default auth((req) => {
   const { pathname } = req.nextUrl;
   const isLoggedIn = !!req.auth?.user;
-  const isAdmin = req.auth?.user?.isAdmin === true;
 
   const needsAuth = PROTECTED_PREFIXES.some((p) => pathname.startsWith(p));
   const needsAdmin = ADMIN_PREFIXES.some((p) => pathname.startsWith(p));
@@ -21,9 +20,8 @@ export default auth((req) => {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (needsAdmin && !isAdmin) {
-    return NextResponse.redirect(new URL("/", req.nextUrl.origin));
-  }
+  // The admin check itself lives in app/admin/page.tsx: the cookie here can
+  // carry a stale role, while auth() there re-reads it from the database.
 
   return NextResponse.next();
 });
