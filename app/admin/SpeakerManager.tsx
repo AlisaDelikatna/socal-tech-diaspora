@@ -337,6 +337,18 @@ function InvitePanel({
     });
   }
 
+  // Check or uncheck everyone currently shown by the filters.
+  function setAllMatches(checked: boolean) {
+    setExcluded((cur) => {
+      const next = new Set(cur);
+      for (const m of matches) {
+        if (checked) next.delete(m.id);
+        else next.add(m.id);
+      }
+      return next;
+    });
+  }
+
   async function send() {
     if (!window.confirm(`Email this speaker invite to ${recipients.length} member${recipients.length === 1 ? "" : "s"}?`)) return;
     setBusy(true);
@@ -391,6 +403,18 @@ function InvitePanel({
           <p className="text-sm text-muted">No members match these filters.</p>
         ) : (
           <div className="max-h-64 overflow-y-auto rounded-lg border border-border bg-white divide-y divide-border">
+            <label className="sticky top-0 z-10 flex items-center gap-3 bg-surface px-3 py-2 text-sm font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={recipients.length === matches.length}
+                ref={(el) => {
+                  if (el) el.indeterminate = recipients.length > 0 && recipients.length < matches.length;
+                }}
+                onChange={() => setAllMatches(recipients.length < matches.length)}
+                className="accent-brand"
+              />
+              {recipients.length === matches.length ? "Uncheck all" : "Check all"}
+            </label>
             {matches.map((m) => (
               <label key={m.id} className="flex items-start gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-surface">
                 <input
