@@ -6,17 +6,20 @@ import EventManager from "./EventManager";
 import ResourceManager from "./ResourceManager";
 import AdminAccess from "./AdminAccess";
 import SpeakerManager from "./SpeakerManager";
+import TalkIdeas from "./TalkIdeas";
 import { formatEventDate } from "@/lib/time";
 
 export const metadata = {
   title: "Admin — Kolo Founders Circle",
 };
 
+const INQUIRY_ORDER = ["pending", "accepted", "sidelined"];
+
 export default async function AdminPage() {
   const session = await auth();
   if (!session?.user?.isAdmin) redirect("/");
 
-  const [pending, events, resources, members, speakerOpps] = await Promise.all([
+  const [pending, events, resources, members, speakerOpps, inquiries] = await Promise.all([
     prisma.user.findMany({
       where: { isApproved: false },
       orderBy: { createdAt: "asc" },
@@ -73,6 +76,12 @@ export default async function AdminPage() {
           orderBy: { createdAt: "asc" },
           include: { submittedBy: { select: { name: true } } },
         },
+      },
+    }),
+    prisma.speakerInquiry.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        user: { select: { id: true, name: true, email: true, title: true, company: true } },
       },
     }),
   ]);
@@ -172,6 +181,31 @@ export default async function AdminPage() {
               createdAt: a.createdAt.toISOString(),
             })),
           }))}
+        />
+      </section>
+
+      <section id="talk-ideas" className="scroll-mt-24">
+        <h2 className="text-xl font-bold mb-1">Talk ideas from members</h2>
+        <p className="text-sm text-muted mb-4">
+          Talks members pitched on the Speaker Opportunities page, outside any
+          open slot. Accept, sideline, or reply by email.
+        </p>
+        <TalkIdeas
+          inquiries={[...inquiries]
+            // Pending first, then accepted, then sidelined; newest first within each.
+            .sort((a, b) => INQUIRY_ORDER.indexOf(a.status) - INQUIRY_ORDER.indexOf(b.status))
+            .map((i) => ({
+              id: i.id,
+              topic: i.topic,
+              description: i.description,
+              mediaUrl: i.mediaUrl,
+              status: i.status,
+              createdAt: i.createdAt.toISOString(),
+              memberId: i.user.id,
+              memberName: i.user.name,
+              memberEmail: i.user.email,
+              memberTitle: [i.user.title, i.user.company].filter(Boolean).join(", ") || null,
+            }))}
         />
       </section>
 

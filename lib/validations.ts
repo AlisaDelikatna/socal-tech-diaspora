@@ -97,6 +97,24 @@ export const speakerApplicationSchema = z
     }
   });
 
+export const speakerInquirySchema = z.object({
+  topic: z.string().trim().min(3, "Add a short topic").max(200),
+  description: z
+    .string()
+    .trim()
+    .min(20, "Tell us a bit more (at least 20 characters)")
+    .max(3000),
+  // Optional; when given it must be a real http(s) link, since it's shown as one.
+  mediaUrl: z
+    .string()
+    .trim()
+    .optional()
+    .refine(
+      (u) => !u || (/^https?:\/\//i.test(u) && z.string().url().safeParse(u).success),
+      "Enter a full link, starting with https://"
+    ),
+});
+
 export const speakerReplySchema = z.object({
   subject: z.string().min(1).max(200),
   body: z.string().min(1).max(10000),

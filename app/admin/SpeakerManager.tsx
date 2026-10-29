@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Field, Input, Textarea } from "@/components/ui";
-import { REPLY_TO } from "@/lib/email-config";
 import MemberInvitePanel, { type InviteMember } from "./MemberInvitePanel";
+import ReplyBox, { type ReplyTemplates } from "./ReplyBox";
 
 type Application = {
   id: string;
@@ -45,7 +45,7 @@ const STATUS_STYLES: Record<string, string> = {
   sidelined: "bg-surface text-muted border-border",
 };
 
-function StatusBadge({ status }: { status: string }) {
+export function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={`inline-block rounded-full border px-2.5 py-0.5 text-xs font-medium capitalize ${STATUS_STYLES[status] ?? ""}`}
@@ -55,7 +55,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-async function api(url: string, method: string, body?: unknown) {
+export async function api(url: string, method: string, body?: unknown) {
   const res = await fetch(url, {
     method,
     headers: { "Content-Type": "application/json" },
@@ -258,7 +258,7 @@ function OpportunityCard({ opp, members }: { opp: Opportunity; members: Member[]
   );
 }
 
-function templates(app: Application, opp: Opportunity) {
+function templates(app: Application, opp: Opportunity): ReplyTemplates {
   const first = app.candidateName.split(" ")[0];
   const intro = app.isSelf
     ? `Thank you for your interest in speaking at ${opp.eventTitle} on ${opp.eventDate}.`
@@ -364,43 +364,14 @@ function CandidateRow({ app, opp }: { app: Application; opp: Opportunity }) {
       <p className="mt-3 text-sm whitespace-pre-line text-foreground/90">{app.pitch}</p>
 
       {reply && (
-        <div className="mt-4 rounded-lg border border-border bg-surface p-4 space-y-3">
-          <div className="flex gap-2 text-xs">
-            <span className="text-muted">Start from:</span>
-            {(["accept", "sideline", "blank"] as const).map((k) => (
-              <button
-                key={k}
-                type="button"
-                className="text-brand hover:underline capitalize"
-                onClick={() => setReply(templates(app, opp)[k])}
-              >
-                {k}
-              </button>
-            ))}
-          </div>
-          <Field label={`To: ${app.candidateEmail}`}>
-            <Input
-              value={reply.subject}
-              onChange={(e) => setReply({ ...reply, subject: e.target.value })}
-              aria-label="Subject"
-            />
-          </Field>
-          <Textarea
-            rows={8}
-            value={reply.body}
-            onChange={(e) => setReply({ ...reply, body: e.target.value })}
-            aria-label="Message"
-          />
-          <p className="text-xs text-muted">Their reply will go to {REPLY_TO}.</p>
-          <div className="flex gap-2">
-            <Button onClick={send} disabled={busy}>
-              {busy ? "Sending..." : "Send email"}
-            </Button>
-            <Button variant="ghost" onClick={() => setReply(null)}>
-              Cancel
-            </Button>
-          </div>
-        </div>
+        <ReplyBox
+          to={app.candidateEmail}
+          reply={reply}
+          setReply={setReply}
+          templates={templates(app, opp)}
+          busy={busy}
+          onSend={send}
+        />
       )}
       {message && <p className="mt-3 text-sm text-brand">{message}</p>}
     </div>

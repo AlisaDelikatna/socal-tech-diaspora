@@ -3,7 +3,9 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { CATEGORIES, getCategoryLabel, getSubcategoryLabel } from "@/lib/resources";
 import { formatEventDate } from "@/lib/time";
+import { auth } from "@/auth";
 import { Card } from "@/components/ui";
+import SpeakerInquiryForm from "./SpeakerInquiryForm";
 
 export default async function SubcategoryPage({
   params,
@@ -32,6 +34,19 @@ export default async function SubcategoryPage({
           })
           .catch(() => [])
       : [];
+
+  // Members can also pitch a talk of their own on the speaking page.
+  const isSpeaking = subcategory === "speaking";
+  const session = isSpeaking ? await auth() : null;
+  const myInquiries = session?.user?.id
+    ? await prisma.speakerInquiry
+        .findMany({
+          where: { userId: session.user.id },
+          orderBy: { createdAt: "desc" },
+          select: { id: true, topic: true, createdAt: true },
+        })
+        .catch(() => [])
+    : [];
 
   const subLabel = (cat.subcategories as Record<string, string>)[subcategory];
 
@@ -74,8 +89,42 @@ export default async function SubcategoryPage({
         </div>
       )}
 
+      {isSpeaking && (
+        <Card className="mt-8 p-5">
+          <h2 className="font-semibold text-lg">Have a talk to share?</h2>
+          <p className="text-sm text-muted mt-1 mb-4">
+            Pitch a topic for an upcoming Kolo event, even if there&apos;s no open
+            slot for it yet. Add a link to a video or demo if you have one.
+          </p>
+          {session?.user?.id ? (
+            <>
+              {myInquiries.length > 0 && (
+                <p className="mb-3 text-sm text-muted">
+                  You&apos;ve pitched:{" "}
+                  {myInquiries
+                    .map(
+                      (i) =>
+                        `"${i.topic}" (${formatEventDate(i.createdAt, { month: "short", day: "numeric" })})`
+                    )
+                    .join(", ")}
+                  .
+                </p>
+              )}
+              <SpeakerInquiryForm />
+            </>
+          ) : (
+            <Link
+              href={`/login?callbackUrl=/resources/${category}/${subcategory}`}
+              className="text-sm font-medium text-brand hover:underline"
+            >
+              Members: log in to pitch a talk
+            </Link>
+          )}
+        </Card>
+      )}
+
       <div className="mt-8">
-        {resources.length === 0 && speakerSlots.length > 0 ? null : resources.length === 0 ? (
+        {resources.length === 0 && (speakerSlots.length > 0 || isSpeaking) ? null : resources.length === 0 ? (
           <div className="rounded-xl border border-border bg-surface p-10 text-center text-muted">
             Nothing here yet — check back soon.
           </div>

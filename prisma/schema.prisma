@@ -51,6 +51,7 @@ model User {
   createdEvents       Event[]              @relation("CreatedEvents")
   rsvps               Rsvp[]
   speakerApplications SpeakerApplication[]
+  speakerInquiries    SpeakerInquiry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -170,4 +171,21 @@ model SpeakerApplication {
 
   @@index([opportunityId])
   @@index([submittedByUserId])
+}
+
+// A talk a member pitches on their own, not tied to an open speaker slot.
+model SpeakerInquiry {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic       String
+  description String
+  // Link to a recording of a past talk, a demo, or slides.
+  mediaUrl    String?
+  // "pending" | "accepted" | "sidelined"
+  status      String   @default("pending")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
 }
