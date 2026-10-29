@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, Field, Input, Textarea } from "@/components/ui";
-import { MEMBER_ROLES, INDUSTRIES } from "@/lib/member-fields";
+import { MEMBER_ROLES, INDUSTRIES, inferRoleFromTitle } from "@/lib/member-fields";
 
 type Application = {
   id: string;
@@ -316,8 +316,16 @@ function InvitePanel({
   const toggleIn = (list: string[], set: (v: string[]) => void) => (value: string) =>
     set(list.includes(value) ? list.filter((v) => v !== value) : [...list, value]);
 
-  const matches = members.filter((m) => {
-    const roleOk = roles.length === 0 || (m.role ? roles.includes(m.role) : includeUnset);
+  // Fall back to a role guessed from the job title for members who haven't
+  // picked one yet.
+  const withRoles = members.map((m) => {
+    const guessed = m.role ? null : inferRoleFromTitle(m.title);
+    return { ...m, effectiveRole: m.role ?? guessed, roleGuessed: !!guessed };
+  });
+
+  const matches = withRoles.filter((m) => {
+    const roleOk =
+      roles.length === 0 || (m.effectiveRole ? roles.includes(m.effectiveRole) : includeUnset);
     const industryOk =
       industries.length === 0 ||
       (m.industries.length > 0
@@ -430,7 +438,10 @@ function InvitePanel({
                     {m.company ? `, ${m.company}` : ""}
                   </span>
                   <span className="block text-xs text-muted">
-                    {[m.role ?? "Role not set", ...m.industries].join(" · ")}
+                    {m.effectiveRole
+                      ? `${m.effectiveRole}${m.roleGuessed ? " (from title)" : ""}`
+                      : "Role not set"}
+                    {m.industries.length > 0 ? ` · ${m.industries.join(" · ")}` : ""}
                   </span>
                 </span>
               </label>
