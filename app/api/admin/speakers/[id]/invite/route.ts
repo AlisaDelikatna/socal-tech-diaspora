@@ -52,7 +52,7 @@ export async function POST(
   })}, ${formatEventTimeRange(date, opp.event.endDateTime)}`;
   const where = opp.event.publicLocation ?? opp.event.address;
 
-  const sent = await sendBulkEmail(
+  const { sent, error } = await sendBulkEmail(
     members.map((m) => ({
       to: m.email,
       replyTo: session.user.email ?? undefined,
@@ -74,7 +74,7 @@ export async function POST(
 
   if (sent === 0) {
     return NextResponse.json(
-      { error: "No emails could be sent. Check the email settings (RESEND_API_KEY)." },
+      { error: `No emails could be sent. Resend said: ${error ?? "unknown error"}` },
       { status: 502 }
     );
   }

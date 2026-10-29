@@ -42,30 +42,36 @@ export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promi
 
 /**
  * Sends one individual email per recipient (no shared To: line) using
- * Resend's batch API, 100 at a time. Returns how many were accepted.
+ * Resend's batch API, 100 at a time. Returns how many were accepted, plus
+ * the last error from Resend (if any) so admins can see why sends failed.
  */
 export async function sendBulkEmail(
   messages: SendArgs[]
-): Promise<number> {
+): Promise<{ sent: number; error: string | null }> {
   if (!resend) {
     console.warn(`[email] RESEND_API_KEY not set — skipping ${messages.length} emails.`);
-    return 0;
+    return { sent: 0, error: "RESEND_API_KEY is not set" };
   }
 
   let sent = 0;
+  let lastError: string | null = null;
   for (let i = 0; i < messages.length; i += 100) {
     const chunk = messages.slice(i, i + 100);
     try {
       const { data, error } = await resend.batch.send(
         chunk.map((m) => ({ from, ...m }))
       );
-      if (error) console.error("[email] batch send failed:", error);
+      if (error) {
+        console.error("[email] batch send failed:", error);
+        lastError = error.message;
+      }
       sent += data?.data.length ?? 0;
     } catch (err) {
       console.error("[email] batch send failed:", err);
+      lastError = err instanceof Error ? err.message : String(err);
     }
   }
-  return sent;
+  return { sent, error: lastError };
 }
 
 /** Escapes user-supplied text for safe inclusion in email HTML. */
