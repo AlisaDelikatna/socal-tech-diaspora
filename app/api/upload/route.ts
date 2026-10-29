@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase";
 
 const BUCKET = "avatars";
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -31,10 +31,7 @@ export async function POST(req: NextRequest) {
     );
   }
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  const supabase = supabaseAdmin();
 
   const ext = file.name.split(".").pop() ?? "jpg";
   const path = `${session.user.id}.${ext}`;
@@ -46,7 +43,7 @@ export async function POST(req: NextRequest) {
   if (error) {
     console.error("[upload] Supabase storage error:", error);
     return NextResponse.json(
-      { error: "Upload failed. Make sure the 'avatars' bucket exists and is public." },
+      { error: "Upload failed. Please try again, or contact an organizer if it keeps happening." },
       { status: 500 }
     );
   }

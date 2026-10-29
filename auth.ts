@@ -1,8 +1,21 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import LinkedIn from "next-auth/providers/linkedin";
+import Google from "next-auth/providers/google";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validations";
+import { storeAvatarFromUrl } from "@/lib/avatar";
+import {
+  enabledOAuthProviders,
+  setPendingOAuthProfile,
+  type OAuthProvider,
+} from "@/lib/oauth";
+
+// Client ID/secret are read from AUTH_LINKEDIN_* / AUTH_GOOGLE_* env vars.
+const oauthProviders = enabledOAuthProviders().map((id) =>
+  id === "linkedin" ? LinkedIn : Google
+);
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   trustHost: true,
@@ -42,21 +55,70 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         };
       },
     }),
+    ...oauthProviders,
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
+    // LinkedIn/Google sign-in: members are matched by email. Approved members
+    // get in; everyone else is sent to the join form with their profile.
+    async signIn({ account, profile }) {
+      if (!account || account.provider === "credentials") return true;
+
+      const email = profile?.email?.toLowerCase();
+      if (!email) return "/login?error=oauth";
+      const picture = typeof profile?.picture === "string" ? profile.picture : null;
+
+      const member = await prisma.user.findUnique({ where: { email } });
+      if (!member) {
+        await setPendingOAuthProfile({
+          provider: account.provider as OAuthProvider,
+          email,
+          name: profile?.name ?? "",
+          picture,
+        });
+        return "/join?via=oauth";
+      }
+      if (!member.isApproved) return "/login?error=pending";
+
+      if (!member.photoUrl && picture) {
+        const photoUrl = await storeAvatarFromUrl(member.id, picture);
+        if (photoUrl) {
+          await prisma.user.update({
+            where: { id: member.id },
+            data: { photoUrl },
+          });
+        }
+      }
+      return true;
+    },
+    async jwt({ token, user, account }) {
+      if (user && account && account.provider !== "credentials") {
+        // The OAuth user id is the provider's; swap in our member id.
+        const member = await prisma.user.findUnique({
+          where: { email: user.email!.toLowerCase() },
+          select: { id: true, isAdmin: true },
+        });
+        // signIn() above only lets existing, approved members through.
+        if (member) {
+          token.id = member.id;
+          token.isAdmin = member.isAdmin;
+        }
+      } else if (user) {
         token.id = user.id as string;
         token.isAdmin = (user as { isAdmin?: boolean }).isAdmin ?? false;
       } else if (token.id) {
-        // Re-read the role so admin grants/revocations apply without re-login.
-        const fresh = await prisma.user
-          .findUnique({
+        // Re-read the member so admin grants/revocations apply without
+        // re-login, and deleted members are signed out.
+        let fresh: { isAdmin: boolean; isApproved: boolean } | null;
+        try {
+          fresh = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { isAdmin: true },
-          })
-          .catch(() => null);
-        if (fresh) token.isAdmin = fresh.isAdmin;
+            select: { isAdmin: true, isApproved: true },
+          });
+        } catch {
+          return token; // DB hiccup: keep the session as-is
+        }
+        if (!fresh || !fresh.isApproved) return null;
+        token.isAdmin = fresh.isAdmin;
       }
       return token;
     },

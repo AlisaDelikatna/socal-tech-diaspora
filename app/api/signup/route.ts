@@ -3,6 +3,11 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { signupSchema } from "@/lib/validations";
 import { sendEmail, emailLayout } from "@/lib/email";
+import { storeAvatarFromUrl } from "@/lib/avatar";
+import {
+  getPendingOAuthProfile,
+  clearPendingOAuthProfile,
+} from "@/lib/oauth";
 
 export async function POST(req: NextRequest) {
   const json = await req.json().catch(() => null);
@@ -17,6 +22,17 @@ export async function POST(req: NextRequest) {
 
   const data = parsed.data;
   const email = data.email.toLowerCase();
+
+  // Applicants who came via LinkedIn/Google sign-in log in that way, so
+  // they don't need a password.
+  const oauth = await getPendingOAuthProfile();
+  const viaOAuth = oauth?.email === email;
+  if (!viaOAuth && (!data.password || data.password.length < 8)) {
+    return NextResponse.json(
+      { error: "Password must be at least 8 characters" },
+      { status: 400 }
+    );
+  }
 
   const existing = await prisma.user.findUnique({ where: { email } });
   if (existing) {
@@ -33,7 +49,12 @@ export async function POST(req: NextRequest) {
     if (inviter) invitedByUserId = inviter.id;
   }
 
-  const passwordHash = await bcrypt.hash(data.password, 10);
+  // OAuth applicants get a random, unknowable password; they can set a real
+  // one later via "Forgot your password?".
+  const passwordHash = await bcrypt.hash(
+    data.password || crypto.randomUUID() + crypto.randomUUID(),
+    10
+  );
 
   let user;
   try {
@@ -58,6 +79,19 @@ export async function POST(req: NextRequest) {
       { error: "Database error: " + (err instanceof Error ? err.message : String(err)) },
       { status: 500 }
     );
+  }
+
+  if (viaOAuth) {
+    if (!user.photoUrl && oauth.picture) {
+      const photoUrl = await storeAvatarFromUrl(user.id, oauth.picture);
+      if (photoUrl) {
+        user = await prisma.user.update({
+          where: { id: user.id },
+          data: { photoUrl },
+        });
+      }
+    }
+    await clearPendingOAuthProfile();
   }
 
   // Confirmation email to the applicant.

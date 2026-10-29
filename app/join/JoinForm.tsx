@@ -4,8 +4,17 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button, Input, Textarea, Field } from "@/components/ui";
+import MemberAvatar from "@/components/MemberAvatar";
+import { OAUTH_LABELS, type OAuthProvider } from "@/lib/oauth-labels";
 
-export default function JoinForm() {
+type OAuthPrefill = {
+  provider: OAuthProvider;
+  email: string;
+  name: string;
+  picture: string | null;
+};
+
+export default function JoinForm({ oauth }: { oauth?: OAuthPrefill | null }) {
   const searchParams = useSearchParams();
   const ref = searchParams.get("ref") ?? "";
 
@@ -64,22 +73,51 @@ export default function JoinForm() {
         </p>
       )}
 
+      {oauth && (
+        <div className="flex items-center gap-3 rounded-lg bg-brand/5 border border-brand/20 px-3 py-2 text-sm">
+          <MemberAvatar
+            name={oauth.name || oauth.email}
+            photoUrl={oauth.picture}
+            size={40}
+          />
+          <span>
+            Connected with {OAUTH_LABELS[oauth.provider]}. Finish the form below
+            and you&apos;ll log in with {OAUTH_LABELS[oauth.provider]} once
+            approved.
+          </span>
+        </div>
+      )}
+
       <Field label="Full name" required>
-        <Input name="name" required placeholder="Olena Kovalenko" />
+        <Input
+          name="name"
+          required
+          placeholder="Olena Kovalenko"
+          defaultValue={oauth?.name}
+        />
       </Field>
 
       <Field label="Email" required hint="This becomes your login.">
-        <Input name="email" type="email" required placeholder="you@example.com" />
+        <Input
+          name="email"
+          type="email"
+          required
+          placeholder="you@example.com"
+          defaultValue={oauth?.email}
+          readOnly={!!oauth}
+        />
       </Field>
 
-      <Field label="Password" required hint="At least 8 characters.">
-        <Input name="password" type="password" required minLength={8} />
-      </Field>
+      {!oauth && (
+        <Field label="Password" required hint="At least 8 characters.">
+          <Input name="password" type="password" required minLength={8} />
+        </Field>
+      )}
 
       <Field
         label="LinkedIn profile URL"
         required
-        hint="We link out to this — we don't pull data from LinkedIn."
+        hint="Shown on your profile so members can connect with you."
       >
         <Input
           name="linkedinUrl"
@@ -113,12 +151,14 @@ export default function JoinForm() {
         <Textarea name="howICanHelp" required rows={2} />
       </Field>
 
-      <Field
-        label="Profile photo URL"
-        hint="Optional — you can add or upload a photo later from your profile."
-      >
-        <Input name="photoUrl" type="url" placeholder="https://..." />
-      </Field>
+      {!oauth?.picture && (
+        <Field
+          label="Profile photo URL"
+          hint="Optional — you can add or upload a photo later from your profile."
+        >
+          <Input name="photoUrl" type="url" placeholder="https://..." />
+        </Field>
+      )}
 
       {error && (
         <p className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-3 py-2 text-sm">

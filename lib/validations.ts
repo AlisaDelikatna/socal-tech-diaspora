@@ -3,7 +3,8 @@ import { z } from "zod";
 export const signupSchema = z.object({
   name: z.string().min(2, "Please enter your full name"),
   email: z.string().email("Enter a valid email address"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  // Required unless the applicant came via LinkedIn/Google (checked in the API).
+  password: z.string().optional().or(z.literal("")),
   linkedinUrl: z
     .string()
     .url("Enter a valid URL")
