@@ -28,6 +28,11 @@ model User {
   isApproved     Boolean  @default(false)
   isAdmin        Boolean  @default(false)
 
+  // Social sign-in identities (provider account ids), so login works even
+  // when the member's email differs from their LinkedIn/Google email.
+  linkedinId     String?  @unique
+  googleId       String?  @unique
+
   // Referral tracking — who invited this member
   invitedByUserId String?
   invitedBy       User?   @relation("Invites", fields: [invitedByUserId], references: [id])

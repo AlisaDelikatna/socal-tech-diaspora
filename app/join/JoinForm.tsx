@@ -97,14 +97,21 @@ export default function JoinForm({ oauth }: { oauth?: OAuthPrefill | null }) {
         />
       </Field>
 
-      <Field label="Email" required hint="This becomes your login.">
+      <Field
+        label="Email"
+        required
+        hint={
+          oauth
+            ? `From ${OAUTH_LABELS[oauth.provider]} — change it if you'd rather we use another email.`
+            : "This becomes your login."
+        }
+      >
         <Input
           name="email"
           type="email"
           required
           placeholder="you@example.com"
           defaultValue={oauth?.email}
-          readOnly={!!oauth}
         />
       </Field>
 

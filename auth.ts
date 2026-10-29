@@ -9,6 +9,7 @@ import { storeAvatarFromUrl } from "@/lib/avatar";
 import {
   enabledOAuthProviders,
   setPendingOAuthProfile,
+  findMemberForOAuth,
   type OAuthProvider,
 } from "@/lib/oauth";
 
@@ -58,8 +59,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     ...oauthProviders,
   ],
   callbacks: {
-    // LinkedIn/Google sign-in: members are matched by email. Approved members
-    // get in; everyone else is sent to the join form with their profile.
+    // LinkedIn/Google sign-in: members are matched by linked provider id or
+    // email. Approved members get in; everyone else is sent to the join form
+    // with their profile.
     async signIn({ account, profile }) {
       if (!account || account.provider === "credentials") return true;
 
@@ -67,10 +69,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       if (!email) return "/login?error=oauth";
       const picture = typeof profile?.picture === "string" ? profile.picture : null;
 
-      const member = await prisma.user.findUnique({ where: { email } });
+      const provider = account.provider as OAuthProvider;
+      const member = await findMemberForOAuth(
+        provider,
+        account.providerAccountId,
+        email
+      );
       if (!member) {
         await setPendingOAuthProfile({
-          provider: account.provider as OAuthProvider,
+          provider,
+          providerAccountId: account.providerAccountId,
           email,
           name: profile?.name ?? "",
           picture,
@@ -93,10 +101,11 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user, account }) {
       if (user && account && account.provider !== "credentials") {
         // The OAuth user id is the provider's; swap in our member id.
-        const member = await prisma.user.findUnique({
-          where: { email: user.email!.toLowerCase() },
-          select: { id: true, isAdmin: true },
-        });
+        const member = await findMemberForOAuth(
+          account.provider as OAuthProvider,
+          account.providerAccountId,
+          user.email
+        );
         // signIn() above only lets existing, approved members through.
         if (member) {
           token.id = member.id;

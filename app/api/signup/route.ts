@@ -7,6 +7,7 @@ import { storeAvatarFromUrl } from "@/lib/avatar";
 import {
   getPendingOAuthProfile,
   clearPendingOAuthProfile,
+  oauthIdField,
 } from "@/lib/oauth";
 
 export async function POST(req: NextRequest) {
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
   // Applicants who came via LinkedIn/Google sign-in log in that way, so
   // they don't need a password.
   const oauth = await getPendingOAuthProfile();
-  const viaOAuth = oauth?.email === email;
+  const viaOAuth = !!oauth;
   if (!viaOAuth && (!data.password || data.password.length < 8)) {
     return NextResponse.json(
       { error: "Password must be at least 8 characters" },
@@ -35,9 +36,18 @@ export async function POST(req: NextRequest) {
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
+  const linkedAlready =
+    oauth &&
+    (await prisma.user.findFirst({
+      where: { [oauthIdField(oauth.provider)]: oauth.providerAccountId },
+    }));
+  if (existing || linkedAlready) {
     return NextResponse.json(
-      { error: "An account with that email already exists." },
+      {
+        error: existing
+          ? "An account with that email already exists."
+          : "That LinkedIn/Google account is already linked to a member. Try logging in instead.",
+      },
       { status: 409 }
     );
   }
@@ -71,6 +81,7 @@ export async function POST(req: NextRequest) {
         photoUrl: data.photoUrl || null,
         invitedByUserId,
         isApproved: false,
+        ...(oauth && { [oauthIdField(oauth.provider)]: oauth.providerAccountId }),
       },
     });
   } catch (err) {

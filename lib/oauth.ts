@@ -1,5 +1,6 @@
 import { cookies } from "next/headers";
 import { encode, decode } from "next-auth/jwt";
+import { prisma } from "@/lib/prisma";
 
 import type { OAuthProvider } from "@/lib/oauth-labels";
 
@@ -27,6 +28,7 @@ const MAX_AGE = 30 * 60;
 
 export type PendingOAuthProfile = {
   provider: OAuthProvider;
+  providerAccountId: string;
   email: string;
   name: string;
   picture: string | null;
@@ -56,9 +58,10 @@ export async function getPendingOAuthProfile(): Promise<PendingOAuthProfile | nu
     secret: process.env.AUTH_SECRET!,
     salt: SALT,
   }).catch(() => null);
-  if (!data?.email || !data.provider) return null;
+  if (!data?.email || !data.provider || !data.providerAccountId) return null;
   return {
     provider: data.provider as OAuthProvider,
+    providerAccountId: String(data.providerAccountId),
     email: String(data.email),
     name: String(data.name ?? ""),
     picture: (data.picture as string | null) ?? null,
@@ -67,4 +70,33 @@ export async function getPendingOAuthProfile(): Promise<PendingOAuthProfile | nu
 
 export async function clearPendingOAuthProfile() {
   (await cookies()).delete(COOKIE);
+}
+
+export function oauthIdField(provider: OAuthProvider) {
+  return provider === "linkedin" ? "linkedinId" : "googleId";
+}
+
+// Find the member for a social sign-in: by linked provider id first, then by
+// email (linking the provider id on first use).
+export async function findMemberForOAuth(
+  provider: OAuthProvider,
+  providerAccountId: string,
+  email: string | null | undefined
+) {
+  const field = oauthIdField(provider);
+  const linked = await prisma.user.findUnique({
+    where: { [field]: providerAccountId } as { linkedinId: string },
+  });
+  if (linked || !email) return linked;
+
+  const byEmail = await prisma.user.findUnique({
+    where: { email: email.toLowerCase() },
+  });
+  if (byEmail && !byEmail[field]) {
+    return prisma.user.update({
+      where: { id: byEmail.id },
+      data: { [field]: providerAccountId },
+    });
+  }
+  return byEmail;
 }
