@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     description:
       "Ukrainian founders, builders, and newcomers in Southern California — standing in circle, growing together.",
   },
-  // Favicon is provided by app/icon.svg (Next.js file convention).
+  // Favicon is provided by app/icon.png (Next.js file convention).
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
