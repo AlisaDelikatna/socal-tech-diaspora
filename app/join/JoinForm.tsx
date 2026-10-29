@@ -83,7 +83,10 @@ export default function JoinForm({ oauth }: { oauth?: OAuthPrefill | null }) {
           <span>
             Connected with {OAUTH_LABELS[oauth.provider]}. Finish the form below
             and you&apos;ll log in with {OAUTH_LABELS[oauth.provider]} once
-            approved.
+            approved.{" "}
+            <a href="/api/join/reset" className="text-brand hover:underline">
+              Not you? Start over
+            </a>
           </span>
         </div>
       )}
