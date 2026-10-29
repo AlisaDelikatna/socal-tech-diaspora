@@ -35,6 +35,8 @@ export default async function ProfilePage() {
             howICanHelp: user.howICanHelp,
             photoUrl: user.photoUrl ?? "",
             tags: user.tags,
+            role: user.role ?? "",
+            industries: user.industries,
           }}
         />
       </div>

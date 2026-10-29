@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Button, Input, Textarea, Field } from "@/components/ui";
 import MemberAvatar from "@/components/MemberAvatar";
+import RoleIndustryFields from "@/components/RoleIndustryFields";
 import { OAUTH_LABELS, type OAuthProvider } from "@/lib/oauth-labels";
 
 type OAuthPrefill = {
@@ -28,12 +29,13 @@ export default function JoinForm({ oauth }: { oauth?: OAuthPrefill | null }) {
     setError(null);
 
     const form = e.currentTarget;
-    const data = Object.fromEntries(new FormData(form).entries());
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
 
     const res = await fetch("/api/signup", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, ref }),
+      body: JSON.stringify({ ...data, industries: formData.getAll("industries"), ref }),
     });
 
     setSubmitting(false);
@@ -144,6 +146,8 @@ export default function JoinForm({ oauth }: { oauth?: OAuthPrefill | null }) {
       <Field label="Company / project">
         <Input name="company" placeholder="Acme Inc. (optional)" />
       </Field>
+
+      <RoleIndustryFields />
 
       <Field
         label="What do you need from this community?"

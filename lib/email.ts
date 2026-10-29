@@ -10,6 +10,7 @@ type SendArgs = {
   to: string;
   subject: string;
   html: string;
+  replyTo?: string;
 };
 
 /**
@@ -17,20 +18,72 @@ type SendArgs = {
  * If RESEND_API_KEY is not set, logs to the console instead of throwing —
  * this keeps local dev and the MVP build working before email is configured.
  */
-export async function sendEmail({ to, subject, html }: SendArgs): Promise<void> {
+export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promise<boolean> {
   if (!resend) {
     console.warn(
       `[email] RESEND_API_KEY not set — skipping send.\n  to: ${to}\n  subject: ${subject}`
     );
-    return;
+    return false;
   }
 
   try {
-    await resend.emails.send({ from, to, subject, html });
+    const { error } = await resend.emails.send({ from, to, subject, html, replyTo });
+    if (error) {
+      console.error("[email] send failed:", error);
+      return false;
+    }
+    return true;
   } catch (err) {
     // Don't let a failed email break the user-facing flow.
     console.error("[email] send failed:", err);
+    return false;
   }
+}
+
+/**
+ * Sends one individual email per recipient (no shared To: line) using
+ * Resend's batch API, 100 at a time. Returns how many were accepted.
+ */
+export async function sendBulkEmail(
+  messages: SendArgs[]
+): Promise<number> {
+  if (!resend) {
+    console.warn(`[email] RESEND_API_KEY not set — skipping ${messages.length} emails.`);
+    return 0;
+  }
+
+  let sent = 0;
+  for (let i = 0; i < messages.length; i += 100) {
+    const chunk = messages.slice(i, i + 100);
+    try {
+      const { data, error } = await resend.batch.send(
+        chunk.map((m) => ({ from, ...m }))
+      );
+      if (error) console.error("[email] batch send failed:", error);
+      sent += data?.data.length ?? 0;
+    } catch (err) {
+      console.error("[email] batch send failed:", err);
+    }
+  }
+  return sent;
+}
+
+/** Escapes user-supplied text for safe inclusion in email HTML. */
+export function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+
+/** Plain text with line breaks -> escaped HTML paragraphs. */
+export function textToHtml(text: string): string {
+  return text
+    .trim()
+    .split(/\n{2,}/)
+    .map((p) => `<p>${escapeHtml(p).replace(/\n/g, "<br>")}</p>`)
+    .join("\n");
 }
 
 /** Minimal branded wrapper so all emails look consistent. */

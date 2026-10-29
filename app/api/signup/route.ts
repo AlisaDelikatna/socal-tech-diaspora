@@ -76,6 +76,8 @@ export async function POST(req: NextRequest) {
         linkedinUrl: data.linkedinUrl,
         title: data.title,
         company: data.company || null,
+        role: data.role,
+        industries: data.industries,
         whatINeed: data.whatINeed,
         howICanHelp: data.howICanHelp,
         photoUrl: data.photoUrl || null,

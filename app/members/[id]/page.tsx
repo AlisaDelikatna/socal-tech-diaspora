@@ -90,6 +90,18 @@ export default async function MemberProfilePage({
           </div>
         </div>
 
+        {(member.role || member.industries.length > 0) && (
+          <div className="mt-6">
+            <h3 className="font-semibold text-sm mb-2">Role and industries</h3>
+            <div className="flex flex-wrap gap-1.5">
+              {member.role && <Tag>{member.role}</Tag>}
+              {member.industries.map((i) => (
+                <Tag key={i}>{i}</Tag>
+              ))}
+            </div>
+          </div>
+        )}
+
         {member.tags.length > 0 && (
           <div className="mt-6">
             <h3 className="font-semibold text-sm mb-2">Skills</h3>

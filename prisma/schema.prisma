@@ -12,26 +12,29 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  name           String
-  email          String   @unique
-  passwordHash   String
-  linkedinUrl    String
-  title          String
-  company        String?
-  bio            String?
-  pronouns       String?
-  whatINeed      String
-  howICanHelp    String
-  photoUrl       String?
-  tags           String[] @default([])
-  isApproved     Boolean  @default(false)
-  isAdmin        Boolean  @default(false)
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  linkedinUrl  String
+  title        String
+  company      String?
+  bio          String?
+  pronouns     String?
+  whatINeed    String
+  howICanHelp  String
+  photoUrl     String?
+  tags         String[] @default([])
+  // One of MEMBER_ROLES / up to 3 of INDUSTRIES (lib/member-fields.ts).
+  role         String?
+  industries   String[] @default([])
+  isApproved   Boolean  @default(false)
+  isAdmin      Boolean  @default(false)
 
   // Social sign-in identities (provider account ids), so login works even
   // when the member's email differs from their LinkedIn/Google email.
-  linkedinId     String?  @unique
-  googleId       String?  @unique
+  linkedinId String? @unique
+  googleId   String? @unique
 
   // Referral tracking — who invited this member
   invitedByUserId String?
@@ -39,14 +42,15 @@ model User {
   invitees        User[]  @relation("Invites")
 
   // Password reset
-  resetToken        String?
-  resetTokenExpiry  DateTime?
+  resetToken       String?
+  resetTokenExpiry DateTime?
 
   // Relations
-  sentMessages     Message[] @relation("SentMessages")
-  receivedMessages Message[] @relation("ReceivedMessages")
-  createdEvents    Event[]   @relation("CreatedEvents")
-  rsvps            Rsvp[]
+  sentMessages        Message[]            @relation("SentMessages")
+  receivedMessages    Message[]            @relation("ReceivedMessages")
+  createdEvents       Event[]              @relation("CreatedEvents")
+  rsvps               Rsvp[]
+  speakerApplications SpeakerApplication[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -69,21 +73,22 @@ model Message {
 }
 
 model Event {
-  id              String   @id @default(cuid())
-  title           String
-  description     String
-  dateTime        DateTime
-  endDateTime     DateTime?
-  address         String
+  id                   String               @id @default(cuid())
+  title                String
+  description          String
+  dateTime             DateTime
+  endDateTime          DateTime?
+  address              String
   // When set, shown instead of the address until the viewer RSVPs.
-  publicLocation  String?
+  publicLocation       String?
   // Max RSVPs; null means unlimited.
-  capacity        Int?
-  createdByUserId String
-  createdBy       User     @relation("CreatedEvents", fields: [createdByUserId], references: [id], onDelete: Cascade)
-  rsvps           Rsvp[]
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  capacity             Int?
+  createdByUserId      String
+  createdBy            User                 @relation("CreatedEvents", fields: [createdByUserId], references: [id], onDelete: Cascade)
+  rsvps                Rsvp[]
+  speakerOpportunities SpeakerOpportunity[]
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
 
   @@index([createdByUserId])
 }
@@ -116,4 +121,48 @@ model Rsvp {
   @@unique([eventId, userId])
   @@index([eventId])
   @@index([userId])
+}
+
+// A speaking slot at an event that we're looking to fill
+// (e.g. "An angel or VC on what to do before raising").
+model SpeakerOpportunity {
+  id           String               @id @default(cuid())
+  eventId      String
+  event        Event                @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  topic        String
+  // Who we're looking for and what the talk should cover.
+  description  String
+  // "open" | "filled" | "closed"
+  status       String               @default("open")
+  // Last time the invite went out to members, and to how many.
+  invitedAt    DateTime?
+  inviteCount  Int                  @default(0)
+  applications SpeakerApplication[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+
+  @@index([eventId])
+}
+
+// A member applying to speak, or recommending someone else.
+// The candidate's details live here so non-members can be put forward.
+model SpeakerApplication {
+  id                String             @id @default(cuid())
+  opportunityId     String
+  opportunity       SpeakerOpportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  submittedByUserId String
+  submittedBy       User               @relation(fields: [submittedByUserId], references: [id], onDelete: Cascade)
+  isSelf            Boolean            @default(true)
+  candidateName     String
+  candidateEmail    String
+  candidateTitle    String?
+  candidateLinkedin String?
+  pitch             String
+  // "pending" | "accepted" | "sidelined"
+  status            String             @default("pending")
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+
+  @@index([opportunityId])
+  @@index([submittedByUserId])
 }

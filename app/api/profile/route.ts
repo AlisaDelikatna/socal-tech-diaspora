@@ -34,6 +34,8 @@ export async function PUT(req: NextRequest) {
       name: d.name,
       title: d.title,
       company: d.company || null,
+      role: d.role,
+      industries: d.industries,
       pronouns: d.pronouns || null,
       bio: d.bio || null,
       linkedinUrl: d.linkedinUrl,

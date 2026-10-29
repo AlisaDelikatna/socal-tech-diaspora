@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Textarea, Field } from "@/components/ui";
 import MemberAvatar from "@/components/MemberAvatar";
+import RoleIndustryFields from "@/components/RoleIndustryFields";
 
 type Initial = {
   name: string;
@@ -16,6 +17,8 @@ type Initial = {
   howICanHelp: string;
   photoUrl: string;
   tags: string[];
+  role: string;
+  industries: string[];
 };
 
 export default function ProfileForm({ initial }: { initial: Initial }) {
@@ -57,12 +60,13 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
     setError(null);
     setSaved(false);
 
-    const data = Object.fromEntries(new FormData(e.currentTarget).entries());
+    const formData = new FormData(e.currentTarget);
+    const data = Object.fromEntries(formData.entries());
 
     const res = await fetch("/api/profile", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...data, photoUrl }),
+      body: JSON.stringify({ ...data, industries: formData.getAll("industries"), photoUrl }),
     });
 
     setSubmitting(false);
@@ -130,6 +134,11 @@ export default function ProfileForm({ initial }: { initial: Initial }) {
           <Input name="company" defaultValue={initial.company} />
         </Field>
       </div>
+
+      <RoleIndustryFields
+        initialRole={initial.role}
+        initialIndustries={initial.industries}
+      />
 
       <Field label="LinkedIn URL" required>
         <Input
