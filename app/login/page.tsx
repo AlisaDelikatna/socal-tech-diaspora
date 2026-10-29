@@ -8,6 +8,8 @@ const ERRORS: Record<string, string> = {
   pending:
     "Your account is still pending approval. We'll email you once it's live.",
   oauth: "We couldn't get your email from that account. Please log in with your password.",
+  AccessDenied: "Sign-in didn't go through. Please try again.",
+  Configuration: "Sign-in didn't go through. Please try again.",
 };
 
 export const metadata = {
