@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendBulkEmail, emailLayout, escapeHtml, textToHtml } from "@/lib/email";
 import { formatEventDate, formatEventTimeRange } from "@/lib/time";
+import { googleCalendarUrl, icsDownloadUrl } from "@/lib/calendar";
 
 // POST { userIds, note? } — email a reminder to members who RSVP'd to an event
 // (admin only). Includes the full address. Replies go to REPLY_TO (lib/email.ts).
@@ -58,6 +59,9 @@ export async function POST(
           <li><strong>When:</strong> ${when}</li>
           <li><strong>Where:</strong> <a href="${mapsUrl}">${escapeHtml(event.address)}</a></li>
         </ul>
+        <p>Not in your calendar yet? Add it:
+          <a href="${escapeHtml(googleCalendarUrl(event))}">Google Calendar</a> ·
+          <a href="${icsDownloadUrl(event.id)}">Apple / Outlook</a></p>
         <p style="margin: 20px 0;">
           <a href="${base}/events/${event.id}" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Event details</a>
         </p>

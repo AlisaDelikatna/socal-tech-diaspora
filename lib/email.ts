@@ -14,12 +14,21 @@ type SendArgs = {
   replyTo?: string;
 };
 
+type Attachment = { filename: string; content: string; contentType: string };
+type SendWithAttachmentsArgs = SendArgs & { attachments?: Attachment[] };
+
 /**
  * Sends a transactional email via Resend.
  * If RESEND_API_KEY is not set, logs to the console instead of throwing —
  * this keeps local dev and the MVP build working before email is configured.
  */
-export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promise<boolean> {
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  replyTo,
+  attachments,
+}: SendWithAttachmentsArgs): Promise<boolean> {
   if (!resend) {
     console.warn(
       `[email] RESEND_API_KEY not set — skipping send.\n  to: ${to}\n  subject: ${subject}`
@@ -28,7 +37,14 @@ export async function sendEmail({ to, subject, html, replyTo }: SendArgs): Promi
   }
 
   try {
-    const { error } = await resend.emails.send({ from, to, subject, html, replyTo: replyTo ?? REPLY_TO });
+    const { error } = await resend.emails.send({
+      from,
+      to,
+      subject,
+      html,
+      replyTo: replyTo ?? REPLY_TO,
+      attachments,
+    });
     if (error) {
       console.error("[email] send failed:", error);
       return false;
@@ -73,6 +89,24 @@ export async function sendBulkEmail(
     }
   }
   return { sent, error: lastError };
+}
+
+/**
+ * Sends emails one at a time, for messages with attachments (Resend's batch
+ * API doesn't take them). Waits and retries once if Resend rate-limits us.
+ * Returns how many were accepted.
+ */
+export async function sendEmailsOneByOne(messages: SendWithAttachmentsArgs[]): Promise<number> {
+  let sent = 0;
+  for (const m of messages) {
+    let ok = await sendEmail(m);
+    if (!ok) {
+      await new Promise((r) => setTimeout(r, 1000));
+      ok = await sendEmail(m);
+    }
+    if (ok) sent++;
+  }
+  return sent;
 }
 
 /** Escapes user-supplied text for safe inclusion in email HTML. */

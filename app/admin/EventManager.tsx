@@ -87,6 +87,13 @@ export default function EventManager({
     }
     setBusy(false);
     if (res.ok) {
+      const body = await res.json().catch(() => null);
+      if (id && body?.attendeesNotified) {
+        setInviteMessage({
+          id,
+          text: "Saved. Everyone going will get an updated calendar invite by email.",
+        });
+      }
       setEditingId(null);
       setCreating(false);
       router.refresh();
@@ -97,6 +104,13 @@ export default function EventManager({
   }
 
   async function remove(id: string) {
+    const e = events.find((ev) => ev.id === id);
+    const upcoming = e && new Date(e.dateTime) > new Date();
+    const warning =
+      upcoming && e.rsvpCount > 0
+        ? `Delete "${e.title}"? The ${e.rsvpCount} people going will get a cancellation email, and it will be removed from their calendars.`
+        : `Delete "${e?.title ?? "this event"}"?`;
+    if (!window.confirm(warning)) return;
     setBusy(true);
     await fetch(`/api/events/${id}`, { method: "DELETE" });
     setBusy(false);

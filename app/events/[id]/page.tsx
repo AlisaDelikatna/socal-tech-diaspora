@@ -6,6 +6,7 @@ import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 import { auth } from "@/auth";
 import MemberAvatar from "@/components/MemberAvatar";
 import RsvpButton from "./RsvpButton";
+import { googleCalendarUrl, icsDownloadUrl } from "@/lib/calendar";
 
 // Link previews (Telegram, LinkedIn, iMessage) use the poster when there is one.
 export async function generateMetadata({
@@ -134,6 +135,24 @@ export default async function EventDetailPage({
               ` · ${event.capacity - event.rsvps.length} spots left`}
           </span>
         </div>
+
+        {alreadyGoing && !isPast && (
+          <p className="mt-3 text-sm text-muted">
+            Add to calendar:{" "}
+            <a
+              href={googleCalendarUrl(event)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-brand hover:underline"
+            >
+              Google
+            </a>
+            {" · "}
+            <a href={icsDownloadUrl(event.id)} className="text-brand hover:underline">
+              Apple / Outlook
+            </a>
+          </p>
+        )}
 
         <p className="mt-6 text-xs text-muted">
           Hosted by {event.createdBy.name}
