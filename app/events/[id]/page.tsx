@@ -21,12 +21,13 @@ export async function generateMetadata({
   if (!event) return {};
   const when = formatEventDate(event.dateTime, { weekday: "long", month: "long", day: "numeric" });
   const description = `${when}. ${event.description.replace(/\s+/g, " ").slice(0, 160)}`;
-  const images = event.posterUrl ? [event.posterUrl] : undefined;
+  // Setting openGraph here replaces the site-wide card, so fall back to it.
+  const images = [event.posterUrl ?? "/opengraph-image"];
   return {
     title: `${event.title} — Kolo Founders Circle`,
     description,
-    openGraph: { title: event.title, description, ...(images && { images }) },
-    twitter: { card: images ? "summary_large_image" : "summary", ...(images && { images }) },
+    openGraph: { title: event.title, description, images },
+    twitter: { card: "summary_large_image", images },
   };
 }
 
