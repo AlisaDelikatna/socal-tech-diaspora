@@ -6,6 +6,7 @@ import { formatEventDate } from "@/lib/time";
 import { auth } from "@/auth";
 import { Card } from "@/components/ui";
 import SpeakerInquiryForm from "./SpeakerInquiryForm";
+import SpeakerApply from "./SpeakerApply";
 
 export default async function SubcategoryPage({
   params,
@@ -22,26 +23,31 @@ export default async function SubcategoryPage({
     })
     .catch(() => []);
 
-  // Speaker slots at upcoming events live on the events themselves, so the
-  // speaking page lists them alongside any curated external opportunities.
-  const speakerSlots =
-    subcategory === "speaking"
-      ? await prisma.speakerOpportunity
-          .findMany({
-            where: { status: "open", event: { dateTime: { gte: new Date() } } },
-            orderBy: { event: { dateTime: "asc" } },
-            include: { event: { select: { id: true, title: true, dateTime: true } } },
-          })
-          .catch(() => [])
-      : [];
-
-  // Members can also pitch a talk of their own on the speaking page.
+  // Speaker slots at upcoming events: members apply or recommend someone
+  // here, and can pitch a talk of their own below.
   const isSpeaking = subcategory === "speaking";
   const session = isSpeaking ? await auth() : null;
-  const myInquiries = session?.user?.id
+  const userId = session?.user?.id;
+  const speakerSlots = isSpeaking
+    ? await prisma.speakerOpportunity
+        .findMany({
+          where: { status: "open", event: { dateTime: { gte: new Date() } } },
+          orderBy: { event: { dateTime: "asc" } },
+          include: {
+            event: { select: { id: true, title: true, dateTime: true } },
+            applications: {
+              where: { submittedByUserId: userId ?? "" },
+              select: { candidateName: true, isSelf: true },
+            },
+          },
+        })
+        .catch(() => [])
+    : [];
+
+  const myInquiries = userId
     ? await prisma.speakerInquiry
         .findMany({
-          where: { userId: session.user.id },
+          where: { userId },
           orderBy: { createdAt: "desc" },
           select: { id: true, topic: true, createdAt: true },
         })
@@ -68,22 +74,47 @@ export default async function SubcategoryPage({
             Speak at a Kolo event
           </h2>
           {speakerSlots.map((s) => (
-            <Card key={s.id} className="p-5 border-brand/30 bg-brand/5">
+            <Card
+              key={s.id}
+              id={`speak-${s.id}`}
+              className="p-5 border-brand/30 bg-brand/5 scroll-mt-24"
+            >
               <div className="text-xs font-semibold uppercase tracking-wide text-accent">
                 {formatEventDate(s.event.dateTime, {
                   weekday: "long",
                   month: "long",
                   day: "numeric",
                 })}{" "}
-                · {s.event.title}
+                ·{" "}
+                <Link href={`/events/${s.event.id}`} className="hover:underline">
+                  {s.event.title}
+                </Link>
               </div>
-              <Link
-                href={`/events/${s.event.id}#speak`}
-                className="mt-1 block font-semibold hover:text-brand"
-              >
-                {s.topic} →
-              </Link>
+              <h3 className="mt-1 font-semibold text-lg">{s.topic}</h3>
               <p className="text-sm text-muted mt-2 whitespace-pre-line">{s.description}</p>
+              <div className="mt-4">
+                {userId ? (
+                  <>
+                    {s.applications.length > 0 && (
+                      <p className="mb-3 text-sm text-muted">
+                        You submitted:{" "}
+                        {s.applications
+                          .map((a) => (a.isSelf ? "yourself" : a.candidateName))
+                          .join(", ")}
+                        . You can recommend someone else too.
+                      </p>
+                    )}
+                    <SpeakerApply opportunityId={s.id} />
+                  </>
+                ) : (
+                  <Link
+                    href={`/login?callbackUrl=/resources/${category}/${subcategory}%23speak-${s.id}`}
+                    className="text-sm font-medium text-brand hover:underline"
+                  >
+                    Members: log in to apply or recommend a speaker
+                  </Link>
+                )}
+              </div>
             </Card>
           ))}
         </div>
@@ -96,7 +127,7 @@ export default async function SubcategoryPage({
             Pitch a topic for an upcoming Kolo event, even if there&apos;s no open
             slot for it yet. Add a link to a video or demo if you have one.
           </p>
-          {session?.user?.id ? (
+          {userId ? (
             <>
               {myInquiries.length > 0 && (
                 <p className="mb-3 text-sm text-muted">

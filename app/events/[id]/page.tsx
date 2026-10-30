@@ -5,7 +5,6 @@ import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 import { auth } from "@/auth";
 import MemberAvatar from "@/components/MemberAvatar";
 import RsvpButton from "./RsvpButton";
-import SpeakerApply from "./SpeakerApply";
 
 export default async function EventDetailPage({
   params,
@@ -23,16 +22,6 @@ export default async function EventDetailPage({
             user: { select: { id: true, name: true, photoUrl: true } },
           },
           orderBy: { createdAt: "asc" },
-        },
-        speakerOpportunities: {
-          where: { status: "open" },
-          orderBy: { createdAt: "asc" },
-          include: {
-            applications: {
-              where: { submittedByUserId: session?.user?.id ?? "" },
-              select: { candidateName: true, isSelf: true },
-            },
-          },
         },
       },
     })
@@ -115,48 +104,6 @@ export default async function EventDetailPage({
           Hosted by {event.createdBy.name}
         </p>
       </div>
-
-      {!isPast && event.speakerOpportunities.length > 0 && (
-        <div id="speak" className="mt-8 scroll-mt-24 space-y-4">
-          {event.speakerOpportunities.map((opp) => (
-            <div
-              key={opp.id}
-              className="rounded-2xl border border-brand/30 bg-brand/5 p-6"
-            >
-              <div className="text-xs font-semibold uppercase tracking-wide text-brand">
-                Speaker wanted
-              </div>
-              <h2 className="mt-1 text-xl font-bold">{opp.topic}</h2>
-              <p className="mt-2 whitespace-pre-line text-foreground/90">
-                {opp.description}
-              </p>
-              <div className="mt-5">
-                {!isLoggedIn ? (
-                  <Link
-                    href={`/login?callbackUrl=/events/${event.id}%23speak`}
-                    className="text-sm font-medium text-brand hover:underline"
-                  >
-                    Members: log in to apply or recommend a speaker
-                  </Link>
-                ) : (
-                  <>
-                    {opp.applications.length > 0 && (
-                      <p className="mb-3 text-sm text-muted">
-                        You submitted:{" "}
-                        {opp.applications
-                          .map((a) => (a.isSelf ? "yourself" : a.candidateName))
-                          .join(", ")}
-                        . You can recommend someone else too.
-                      </p>
-                    )}
-                    <SpeakerApply opportunityId={opp.id} />
-                  </>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
 
       {event.rsvps.length > 0 && (
         <div className="mt-8">

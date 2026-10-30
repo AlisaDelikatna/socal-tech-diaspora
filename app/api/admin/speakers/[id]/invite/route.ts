@@ -5,6 +5,7 @@ import { sendBulkEmail, emailLayout, escapeHtml, textToHtml } from "@/lib/email"
 import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 import { resolveGuestEmails } from "@/lib/guest-invites";
 import { FREE_MEMBERSHIP_DEADLINE } from "@/lib/guests";
+import { SPEAKING_PATH } from "@/lib/resources";
 
 // POST { userIds, guestEmails?, note? } — email the chosen approved members,
 // and non-members by email address, about a speaker opportunity (admin only). Replies go to REPLY_TO (lib/email.ts).
@@ -74,7 +75,7 @@ export async function POST(
         ${slot}
         <p>Would you like to speak, or do you know someone who'd be great? Apply or recommend them here:</p>
         <p style="margin: 20px 0;">
-          <a href="${base}/events/${opp.event.id}#speak" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Apply or recommend a speaker</a>
+          <a href="${base}${SPEAKING_PATH}#speak-${opp.id}" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Apply or recommend a speaker</a>
         </p>
         <p style="color:#6b7280;font-size:13px;">You can also just reply to this email.</p>
       `),

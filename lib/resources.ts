@@ -19,6 +19,9 @@ export const CATEGORIES = {
   },
 } as const;
 
+// Open speaker slots and the pitch-a-talk form live here.
+export const SPEAKING_PATH = "/resources/opportunities/speaking";
+
 export type Category = keyof typeof CATEGORIES;
 export type Subcategory =
   | keyof (typeof CATEGORIES)["education"]["subcategories"]
