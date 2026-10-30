@@ -23,6 +23,7 @@ type EventItem = {
   address: string;
   publicLocation: string | null;
   capacity: number | null;
+  posterUrl: string | null;
   rsvpCount: number;
   attendees: Attendee[];
   invitedAt: string | null;
@@ -102,82 +103,16 @@ export default function EventManager({
     router.refresh();
   }
 
-  function EventForm({ item }: { item?: EventItem }) {
-    return (
-      <form onSubmit={(e) => save(e, item?.id)} className="space-y-3">
-        <Field label="Title" required>
-          <Input name="title" required defaultValue={item?.title} />
-        </Field>
-        <Field label="Date & time" required>
-          <Input
-            name="dateTime"
-            type="datetime-local"
-            required
-            defaultValue={item ? toEventInput(item.dateTime) : ""}
-          />
-        </Field>
-        <Field label="End time">
-          <Input
-            name="endDateTime"
-            type="datetime-local"
-            defaultValue={item?.endDateTime ? toEventInput(item.endDateTime) : ""}
-          />
-        </Field>
-        <Field label="Address" required>
-          <Input name="address" required defaultValue={item?.address} />
-        </Field>
-        <Field label="Public location (hides address until RSVP)">
-          <Input
-            name="publicLocation"
-            placeholder="e.g. Los Angeles"
-            defaultValue={item?.publicLocation ?? ""}
-          />
-        </Field>
-        <Field label="Capacity (leave empty for unlimited)">
-          <Input
-            name="capacity"
-            type="number"
-            min={1}
-            defaultValue={item?.capacity ?? ""}
-          />
-        </Field>
-        <Field label="Description" required>
-          <Textarea
-            name="description"
-            rows={3}
-            required
-            defaultValue={item?.description}
-          />
-        </Field>
-        {error && (
-          <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
-            {error}
-          </p>
-        )}
-        <div className="flex gap-2">
-          <Button type="submit" disabled={busy}>
-            {item ? "Save" : "Create event"}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => {
-              setEditingId(null);
-              setCreating(false);
-            }}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
-    );
-  }
-
   return (
     <div className="space-y-4">
       {creating ? (
         <Card>
-          <EventForm />
+          <EventForm
+            busy={busy}
+            error={error}
+            onSubmit={(ev) => save(ev)}
+            onCancel={() => setCreating(false)}
+          />
         </Card>
       ) : (
         <Button onClick={() => setCreating(true)}>+ New event</Button>
@@ -187,7 +122,13 @@ export default function EventManager({
         {events.map((e) => (
           <Card key={e.id}>
             {editingId === e.id ? (
-              <EventForm item={e} />
+              <EventForm
+                item={e}
+                busy={busy}
+                error={error}
+                onSubmit={(ev) => save(ev, e.id)}
+                onCancel={() => setEditingId(null)}
+              />
             ) : (
               <div>
                 <div className="flex justify-between items-start gap-4 flex-wrap">
@@ -324,5 +265,141 @@ export default function EventManager({
         )}
       </div>
     </div>
+  );
+}
+
+function EventForm({
+  item,
+  busy,
+  error,
+  onSubmit,
+  onCancel,
+}: {
+  item?: EventItem;
+  busy: boolean;
+  error: string | null;
+  onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
+  onCancel: () => void;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-3">
+      <Field label="Title" required>
+        <Input name="title" required defaultValue={item?.title} />
+      </Field>
+      <Field label="Date & time" required>
+        <Input
+          name="dateTime"
+          type="datetime-local"
+          required
+          defaultValue={item ? toEventInput(item.dateTime) : ""}
+        />
+      </Field>
+      <Field label="End time">
+        <Input
+          name="endDateTime"
+          type="datetime-local"
+          defaultValue={item?.endDateTime ? toEventInput(item.endDateTime) : ""}
+        />
+      </Field>
+      <Field label="Address" required>
+        <Input name="address" required defaultValue={item?.address} />
+      </Field>
+      <Field label="Public location (hides address until RSVP)">
+        <Input
+          name="publicLocation"
+          placeholder="e.g. Los Angeles"
+          defaultValue={item?.publicLocation ?? ""}
+        />
+      </Field>
+      <Field label="Capacity (leave empty for unlimited)">
+        <Input
+          name="capacity"
+          type="number"
+          min={1}
+          defaultValue={item?.capacity ?? ""}
+        />
+      </Field>
+      <PosterField initialUrl={item?.posterUrl ?? null} />
+      <Field label="Description" required>
+        <Textarea
+          name="description"
+          rows={3}
+          required
+          defaultValue={item?.description}
+        />
+      </Field>
+      {error && (
+        <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+          {error}
+        </p>
+      )}
+      <div className="flex gap-2">
+        <Button type="submit" disabled={busy}>
+          {item ? "Save" : "Create event"}
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={onCancel}
+        >
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// Poster upload; the URL rides along with the form in a hidden input.
+function PosterField({ initialUrl }: { initialUrl: string | null }) {
+  const [url, setUrl] = useState(initialUrl ?? "");
+  const [uploading, setUploading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function upload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploading(true);
+    setError(null);
+    const form = new FormData();
+    form.append("file", file);
+    const res = await fetch("/api/admin/events/poster", { method: "POST", body: form }).catch(
+      () => null
+    );
+    setUploading(false);
+    const body = await res?.json().catch(() => ({}));
+    if (!res?.ok || !body?.url) {
+      setError(body?.error ?? "Upload failed. Please try again.");
+      return;
+    }
+    setUrl(body.url);
+  }
+
+  return (
+    <Field label="Poster" hint="Optional. JPEG, PNG, or WebP under 5 MB. Shown on the event page, in invites, and in link previews.">
+      <input type="hidden" name="posterUrl" value={url} />
+      {url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={url} alt="Event poster" className="mb-2 max-h-48 rounded-lg border border-border" />
+      )}
+      <div className="flex items-center gap-3 text-sm">
+        <label className="cursor-pointer rounded-lg border border-border px-3 py-1.5 hover:bg-surface">
+          {uploading ? "Uploading..." : url ? "Replace poster" : "Upload poster"}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={upload}
+            disabled={uploading}
+          />
+        </label>
+        {url && !uploading && (
+          <button type="button" className="text-muted hover:text-red-600" onClick={() => setUrl("")}>
+            Remove
+          </button>
+        )}
+      </div>
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+    </Field>
   );
 }

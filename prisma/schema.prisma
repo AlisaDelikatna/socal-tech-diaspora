@@ -84,6 +84,8 @@ model Event {
   publicLocation       String?
   // Max RSVPs; null means unlimited.
   capacity             Int?
+  // Public URL of the event poster in the event-posters storage bucket.
+  posterUrl            String?
   // Last time the invite went out to members, and to how many.
   invitedAt            DateTime?
   inviteCount          Int                  @default(0)

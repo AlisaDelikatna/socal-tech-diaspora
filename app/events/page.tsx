@@ -19,6 +19,7 @@ function EventRow({
     address: string;
     publicLocation: string | null;
     capacity: number | null;
+    posterUrl: string | null;
     _count: { rsvps: number };
   };
 }) {
@@ -26,6 +27,16 @@ function EventRow({
   return (
     <Card className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
       <div className="flex gap-4">
+        {event.posterUrl && (
+          <Link href={`/events/${event.id}`} className="hidden sm:block shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={event.posterUrl}
+              alt=""
+              className="h-20 w-20 rounded-lg border border-border object-cover"
+            />
+          </Link>
+        )}
         <div className="text-center shrink-0 w-14">
           <div className="text-xs uppercase text-accent font-semibold">
             {formatEventDate(date, { month: "short" })}

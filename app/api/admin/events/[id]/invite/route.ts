@@ -63,6 +63,7 @@ export async function POST(
     event.capacity != null ? Math.max(event.capacity - event._count.rsvps, 0) : null;
 
   const details = `
+        ${event.posterUrl ? `<p><a href="${base}/events/${event.id}"><img src="${escapeHtml(event.posterUrl)}" alt="${escapeHtml(event.title)} poster" style="display:block;width:100%;max-width:480px;border-radius:8px;" /></a></p>` : ""}
         <p style="font-size:18px;font-weight:700;margin-bottom:4px;">${escapeHtml(event.title)}</p>
         <ul style="padding-left:18px;">
           <li><strong>When:</strong> ${when}</li>

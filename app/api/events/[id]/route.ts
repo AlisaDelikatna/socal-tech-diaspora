@@ -32,6 +32,7 @@ export async function PUT(
         endDateTime: d.endDateTime ? parseEventInput(d.endDateTime) : null,
         address: d.address,
         publicLocation: d.publicLocation?.trim() || null,
+        posterUrl: d.posterUrl || null,
         capacity: d.capacity ?? null,
       },
     });

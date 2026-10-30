@@ -132,6 +132,7 @@ export default async function AdminPage() {
             address: e.address,
             publicLocation: e.publicLocation,
             capacity: e.capacity,
+            posterUrl: e.posterUrl,
             rsvpCount: e._count.rsvps,
             invitedAt: e.invitedAt?.toISOString() ?? null,
             inviteCount: e.inviteCount,

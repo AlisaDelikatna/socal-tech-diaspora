@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
@@ -5,6 +6,29 @@ import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 import { auth } from "@/auth";
 import MemberAvatar from "@/components/MemberAvatar";
 import RsvpButton from "./RsvpButton";
+
+// Link previews (Telegram, LinkedIn, iMessage) use the poster when there is one.
+export async function generateMetadata({
+  params,
+}: PageProps<"/events/[id]">): Promise<Metadata> {
+  const { id } = await params;
+  const event = await prisma.event
+    .findUnique({
+      where: { id },
+      select: { title: true, description: true, dateTime: true, posterUrl: true },
+    })
+    .catch(() => null);
+  if (!event) return {};
+  const when = formatEventDate(event.dateTime, { weekday: "long", month: "long", day: "numeric" });
+  const description = `${when}. ${event.description.replace(/\s+/g, " ").slice(0, 160)}`;
+  const images = event.posterUrl ? [event.posterUrl] : undefined;
+  return {
+    title: `${event.title} — Kolo Founders Circle`,
+    description,
+    openGraph: { title: event.title, description, ...(images && { images }) },
+    twitter: { card: images ? "summary_large_image" : "summary", ...(images && { images }) },
+  };
+}
 
 export default async function EventDetailPage({
   params,
@@ -46,6 +70,16 @@ export default async function EventDetailPage({
       </Link>
 
       <div className="mt-4 rounded-2xl border border-border bg-white p-8">
+        {event.posterUrl && (
+          <a href={event.posterUrl} target="_blank" rel="noopener noreferrer" className="block mb-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={event.posterUrl}
+              alt={`${event.title} poster`}
+              className="mx-auto w-full max-w-md rounded-xl border border-border"
+            />
+          </a>
+        )}
         <div className="text-sm font-semibold text-accent uppercase tracking-wide">
           {formatEventDate(date, {
             weekday: "long",

@@ -61,6 +61,11 @@ export const eventSchema = z.object({
   endDateTime: z.string().optional(),
   address: z.string().min(2),
   publicLocation: z.string().optional(),
+  // Set by the poster upload; "" removes the poster.
+  posterUrl: z
+    .string()
+    .optional()
+    .refine((u) => !u || /^https:\/\//.test(u), "Invalid poster link"),
   capacity: z.preprocess(
     (v) => (v === "" || v == null ? undefined : Number(v)),
     z.number().int().positive().optional()
