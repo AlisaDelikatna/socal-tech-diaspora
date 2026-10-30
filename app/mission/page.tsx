@@ -30,9 +30,10 @@ export default function MissionPage() {
         Our Mission
       </span>
       <h1 className="mt-2 text-3xl sm:text-4xl font-normal">
-        Kolo Founders Circle unites Ukrainian tech professionals, founders, and
-        newcomers in Southern California to grow together — professionally,
-        culturally, and as a community that has each other&apos;s back.
+        Kolo Founders Circle is where founders in Southern California find
+        their circle. Whether you&rsquo;ve been building here for years or just
+        arrived, we share our networks, resources, and hard-won knowledge, make
+        the introductions that matter, and help each other close the next deal.
       </h1>
 
       <h2 className="mt-14 text-2xl font-bold">Our Values</h2>
