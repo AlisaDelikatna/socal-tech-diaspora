@@ -20,18 +20,21 @@ function EventRow({
     publicLocation: string | null;
     capacity: number | null;
     posterUrl: string | null;
+    photos: { url: string }[];
     _count: { rsvps: number };
   };
 }) {
   const date = new Date(event.dateTime);
+  // The poster, or for past events without one, the first photo.
+  const thumb = event.posterUrl ?? event.photos[0]?.url;
   return (
     <Card className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between">
       <div className="flex gap-4">
-        {event.posterUrl && (
+        {thumb && (
           <Link href={`/events/${event.id}`} className="hidden sm:block shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={event.posterUrl}
+              src={thumb}
               alt=""
               className="h-20 w-20 rounded-lg border border-border object-cover"
             />
@@ -82,7 +85,10 @@ export default async function EventsPage() {
       .findMany({
         where: { dateTime: { gte: now } },
         orderBy: { dateTime: "asc" },
-        include: { _count: { select: { rsvps: true } } },
+        include: {
+          _count: { select: { rsvps: true } },
+          photos: { orderBy: [{ position: "asc" }, { createdAt: "asc" }], take: 1, select: { url: true } },
+        },
       })
       .catch(() => []),
     prisma.event
@@ -90,7 +96,10 @@ export default async function EventsPage() {
         where: { dateTime: { lt: now } },
         orderBy: { dateTime: "desc" },
         take: 10,
-        include: { _count: { select: { rsvps: true } } },
+        include: {
+          _count: { select: { rsvps: true } },
+          photos: { orderBy: [{ position: "asc" }, { createdAt: "asc" }], take: 1, select: { url: true } },
+        },
       })
       .catch(() => []),
   ]);

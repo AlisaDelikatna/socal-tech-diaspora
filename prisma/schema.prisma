@@ -95,6 +95,7 @@ model Event {
   createdBy            User                 @relation("CreatedEvents", fields: [createdByUserId], references: [id], onDelete: Cascade)
   rsvps                Rsvp[]
   speakerOpportunities SpeakerOpportunity[]
+  photos               EventPhoto[]
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
 
@@ -190,4 +191,19 @@ model SpeakerInquiry {
   updatedAt   DateTime @updatedAt
 
   @@index([userId])
+}
+
+// A photo in an event's gallery, stored in the event-photos bucket.
+model EventPhoto {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  url       String
+  // Object path in the bucket, so the file can be deleted with the photo.
+  path      String
+  // Lower numbers show first.
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
 }

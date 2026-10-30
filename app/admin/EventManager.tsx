@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, Button, Input, Textarea, Field } from "@/components/ui";
 import { formatEventDate, toEventInput } from "@/lib/time";
 import MemberInvitePanel, { type InviteMember } from "./MemberInvitePanel";
+import EventPhotos, { type Photo } from "./EventPhotos";
 
 type Attendee = {
   id: string;
@@ -24,6 +25,7 @@ type EventItem = {
   publicLocation: string | null;
   capacity: number | null;
   posterUrl: string | null;
+  photos: Photo[];
   rsvpCount: number;
   attendees: Attendee[];
   invitedAt: string | null;
@@ -46,6 +48,7 @@ export default function EventManager({
   const [rsvpOpenId, setRsvpOpenId] = useState<string | null>(null);
   // Which event's email panel is open, and for what.
   const [panel, setPanel] = useState<{ id: string; kind: "invite" | "remind" } | null>(null);
+  const [photosOpenId, setPhotosOpenId] = useState<string | null>(null);
   const [inviteMessage, setInviteMessage] = useState<{ id: string; text: string } | null>(null);
 
   function togglePanel(id: string, kind: "invite" | "remind") {
@@ -171,7 +174,7 @@ export default function EventManager({
                         (rsvpOpenId === e.id ? " ▲" : " — view ▼")}
                     </button>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 flex-wrap">
                     {new Date(e.dateTime) > new Date() && (
                       <>
                         <Button onClick={() => togglePanel(e.id, "invite")}>
@@ -184,6 +187,12 @@ export default function EventManager({
                         )}
                       </>
                     )}
+                    <Button
+                      variant="outline"
+                      onClick={() => setPhotosOpenId(photosOpenId === e.id ? null : e.id)}
+                    >
+                      Photos{e.photos.length > 0 && ` (${e.photos.length})`}
+                    </Button>
                     <Button variant="outline" onClick={() => setEditingId(e.id)}>
                       Edit
                     </Button>
@@ -209,6 +218,7 @@ export default function EventManager({
                       .join(" · ")}
                   </p>
                 )}
+                {photosOpenId === e.id && <EventPhotos eventId={e.id} photos={e.photos} />}
                 {panel?.id === e.id && (
                   <MemberInvitePanel
                     key={panel.kind}

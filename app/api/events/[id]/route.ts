@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { eventSchema } from "@/lib/validations";
 import { parseEventInput } from "@/lib/time";
 import { notifyAttendees } from "@/lib/event-updates";
+import { removeFiles, PHOTO_BUCKET } from "@/lib/storage";
 
 // PUT — update an event (admin only).
 export async function PUT(
@@ -78,9 +79,15 @@ export async function DELETE(
   // Load attendees first; they're deleted along with the event.
   const event = await prisma.event.findUnique({
     where: { id },
-    include: { rsvps: { select: { user: { select: { name: true, email: true } } } } },
+    include: {
+      rsvps: { select: { user: { select: { name: true, email: true } } } },
+      photos: { select: { path: true } },
+    },
   });
   await prisma.event.delete({ where: { id } }).catch(() => null);
+  if (event?.photos.length) {
+    await removeFiles(PHOTO_BUCKET, event.photos.map((p) => p.path));
+  }
 
   // Take an upcoming event off everyone's calendar.
   if (event && event.dateTime > new Date() && event.rsvps.length > 0) {

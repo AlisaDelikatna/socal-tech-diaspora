@@ -39,6 +39,7 @@ export default async function AdminPage() {
       orderBy: { dateTime: "desc" },
       include: {
         _count: { select: { rsvps: true } },
+        photos: { orderBy: [{ position: "asc" }, { createdAt: "asc" }], select: { id: true, url: true } },
         rsvps: {
           orderBy: { createdAt: "asc" },
           select: {
@@ -133,6 +134,7 @@ export default async function AdminPage() {
             publicLocation: e.publicLocation,
             capacity: e.capacity,
             posterUrl: e.posterUrl,
+            photos: e.photos,
             rsvpCount: e._count.rsvps,
             invitedAt: e.invitedAt?.toISOString() ?? null,
             inviteCount: e.inviteCount,

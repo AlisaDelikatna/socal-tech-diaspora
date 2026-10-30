@@ -6,6 +6,7 @@ import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 import { auth } from "@/auth";
 import MemberAvatar from "@/components/MemberAvatar";
 import RsvpButton from "./RsvpButton";
+import PhotoCarousel from "./PhotoCarousel";
 import { googleCalendarUrl, icsDownloadUrl } from "@/lib/calendar";
 
 // Link previews (Telegram, LinkedIn, iMessage) use the poster when there is one.
@@ -48,6 +49,10 @@ export default async function EventDetailPage({
             user: { select: { id: true, name: true, photoUrl: true } },
           },
           orderBy: { createdAt: "asc" },
+        },
+        photos: {
+          orderBy: [{ position: "asc" }, { createdAt: "asc" }],
+          select: { id: true, url: true },
         },
       },
     })
@@ -158,6 +163,13 @@ export default async function EventDetailPage({
           Hosted by {event.createdBy.name}
         </p>
       </div>
+
+      {event.photos.length > 0 && (
+        <section className="mt-8">
+          <h2 className="font-semibold mb-3">Photos</h2>
+          <PhotoCarousel photos={event.photos} title={event.title} />
+        </section>
+      )}
 
       {event.rsvps.length > 0 && (
         <div className="mt-8">
