@@ -32,11 +32,13 @@ export default function Footer() {
           >
             hello@kolofounders.com
           </a>
-          <a href="#" className="text-muted hover:text-brand">
+          <a
+            href="https://www.linkedin.com/company/143885883"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted hover:text-brand"
+          >
             LinkedIn
-          </a>
-          <a href="#" className="text-muted hover:text-brand">
-            Instagram
           </a>
         </div>
       </div>
