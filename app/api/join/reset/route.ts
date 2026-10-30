@@ -4,5 +4,6 @@ import { clearPendingOAuthProfile } from "@/lib/oauth";
 // GET — forget the connected LinkedIn/Google profile and show a blank join form.
 export async function GET(req: NextRequest) {
   await clearPendingOAuthProfile();
-  return NextResponse.redirect(new URL("/join", req.nextUrl.origin));
+  // On Netlify, req.nextUrl.origin is the internal deploy host, not our domain.
+  return NextResponse.redirect(new URL("/join", process.env.NEXTAUTH_URL ?? req.nextUrl.origin));
 }

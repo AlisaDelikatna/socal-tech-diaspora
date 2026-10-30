@@ -10,9 +10,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  // On Netlify, req.nextUrl.origin is the internal deploy host, not our domain.
+  const origin = process.env.NEXTAUTH_URL ?? req.nextUrl.origin;
   const session = await auth();
   if (!session?.user?.id) {
-    const login = new URL("/login", req.nextUrl.origin);
+    const login = new URL("/login", origin);
     login.searchParams.set("callbackUrl", `/api/events/${id}/calendar`);
     return NextResponse.redirect(login);
   }
@@ -25,7 +27,7 @@ export async function GET(
     where: { eventId_userId: { eventId: id, userId: session.user.id } },
   });
   if (!going && !session.user.isAdmin) {
-    return NextResponse.redirect(new URL(`/events/${id}`, req.nextUrl.origin));
+    return NextResponse.redirect(new URL(`/events/${id}`, origin));
   }
 
   return new NextResponse(buildIcs(event, "PUBLISH"), {
