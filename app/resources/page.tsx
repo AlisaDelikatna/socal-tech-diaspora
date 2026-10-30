@@ -8,9 +8,14 @@ export const metadata = {
 };
 
 export default async function ResourcesPage() {
-  const resources = await prisma.resource
-    .findMany({ where: { isPublished: true }, orderBy: { createdAt: "desc" } })
-    .catch(() => []);
+  const [resources, openSpeakerSlots] = await Promise.all([
+    prisma.resource
+      .findMany({ where: { isPublished: true }, orderBy: { createdAt: "desc" } })
+      .catch(() => []),
+    prisma.speakerOpportunity
+      .count({ where: { status: "open", event: { dateTime: { gte: new Date() } } } })
+      .catch(() => 0),
+  ]);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-12">
@@ -46,8 +51,20 @@ export default async function ResourcesPage() {
                         <span className="h-1 w-4 rounded-full bg-accent" />
                         {subLabel}
                       </Link>
+                      {subKey === "speaking" && (
+                        <Link
+                          href={`/resources/${catKey}/${subKey}`}
+                          className="block text-sm text-brand hover:underline mb-2"
+                        >
+                          {openSpeakerSlots > 0
+                            ? `${openSpeakerSlots} open speaker ${openSpeakerSlots === 1 ? "slot" : "slots"} at Kolo events, or pitch your own talk →`
+                            : "Pitch a talk for an upcoming Kolo event →"}
+                        </Link>
+                      )}
                       {items.length === 0 ? (
-                        <p className="text-sm text-muted">Coming soon.</p>
+                        subKey === "speaking" ? null : (
+                          <p className="text-sm text-muted">Coming soon.</p>
+                        )
                       ) : (
                         <div className="space-y-2">
                           {items.slice(0, 3).map((r) => (
