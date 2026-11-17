@@ -24,6 +24,8 @@ export default async function AdminPage() {
       where: { isApproved: false },
       orderBy: { createdAt: "asc" },
       select: {
+        // Guests who checked in at an event apply this way.
+        checkIns: { select: { event: { select: { title: true } } } },
         id: true,
         name: true,
         email: true,
@@ -42,7 +44,7 @@ export default async function AdminPage() {
         presenters: { orderBy: { position: "asc" }, select: { userId: true } },
         checkIns: {
           orderBy: { createdAt: "asc" },
-          select: { user: { select: { id: true, name: true } } },
+          select: { user: { select: { id: true, name: true, isApproved: true } } },
         },
         photos: { orderBy: [{ position: "asc" }, { createdAt: "asc" }], select: { id: true, url: true } },
         rsvps: {
@@ -118,8 +120,9 @@ export default async function AdminPage() {
           Pending applications ({pending.length})
         </h2>
         <PendingMembers
-          members={pending.map((m) => ({
+          members={pending.map(({ checkIns, ...m }) => ({
             ...m,
+            checkedInAt: checkIns.map((c) => c.event.title),
             createdAt: m.createdAt.toISOString(),
           }))}
         />
@@ -143,7 +146,11 @@ export default async function AdminPage() {
             wifiPassword: e.wifiPassword,
             discussionQuestions: e.discussionQuestions,
             presenterIds: e.presenters.map((p) => p.userId),
-            checkedIn: e.checkIns.map((c) => c.user),
+            checkedIn: e.checkIns.map(({ user }) => ({
+              id: user.id,
+              name: user.name,
+              guest: !user.isApproved,
+            })),
             photos: e.photos,
             rsvpCount: e._count.rsvps,
             invitedAt: e.invitedAt?.toISOString() ?? null,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import crypto from "crypto";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, emailLayout } from "@/lib/email";
@@ -29,12 +30,27 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true });
   }
 
+  // Guests who applied by checking in at an event never chose a password
+  // (the guest form doesn't ask for "needs" / "can help" either), so their
+  // email gets a link to set one. It lasts a week rather than an hour.
+  const isGuest = !user.whatINeed && !user.howICanHelp && !user.linkedinId && !user.googleId;
+  const resetToken = isGuest ? crypto.randomBytes(32).toString("hex") : null;
+
   await prisma.user.update({
     where: { id: userId },
-    data: { isApproved: true },
+    data: {
+      isApproved: true,
+      ...(resetToken && {
+        resetToken,
+        resetTokenExpiry: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      }),
+    },
   });
 
   const base = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
+  const button = resetToken
+    ? { href: `${base}/reset-password?token=${resetToken}`, label: "Set your password" }
+    : { href: `${base}/login`, label: "Log in" };
   await sendEmail({
     to: user.email,
     subject: "You're in — welcome to Kolo Founders Circle",
@@ -42,8 +58,12 @@ export async function POST(req: NextRequest) {
       <p>Hi ${user.name.split(" ")[0]},</p>
       <p>Your membership has been approved 🎉 You can now log in, complete your profile, connect with members, and RSVP to events.</p>
       <p style="margin: 20px 0;">
-        <a href="${base}/login" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Log in</a>
-      </p>
+        <a href="${button.href}" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">${button.label}</a>
+      </p>${
+        resetToken
+          ? `<p style="color:#6b7280;font-size:13px;">This link works for 7 days. After that, use &ldquo;Forgot your password?&rdquo; on the login page.</p>`
+          : ""
+      }
       <p>You&rsquo;re now part of the circle.</p>
     `),
   });

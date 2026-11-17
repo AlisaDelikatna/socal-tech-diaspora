@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { checkInPath, checkInWindow } from "@/lib/checkin";
 import { formatEventDate } from "@/lib/time";
 import CheckInNow from "./CheckInNow";
+import GuestCheckIn from "./GuestCheckIn";
 
 export const metadata = {
   title: "Check in — Kolo Founders Circle",
@@ -17,9 +18,7 @@ export default async function CheckInPage({
 }: PageProps<"/events/[id]/checkin">) {
   const { id } = await params;
   const session = await auth();
-  if (!session?.user?.id) {
-    redirect(`/login?callbackUrl=${encodeURIComponent(checkInPath(id))}`);
-  }
+  const userId = session?.user?.id;
 
   const event = await prisma.event
     .findUnique({
@@ -29,10 +28,12 @@ export default async function CheckInPage({
     .catch(() => null);
   if (!event) notFound();
 
-  const already = await prisma.checkIn.findUnique({
-    where: { eventId_userId: { eventId: id, userId: session.user.id } },
-    select: { id: true },
-  });
+  const already =
+    userId &&
+    (await prisma.checkIn.findUnique({
+      where: { eventId_userId: { eventId: id, userId } },
+      select: { id: true },
+    }));
   const window = checkInWindow(event);
 
   return (
@@ -45,7 +46,14 @@ export default async function CheckInPage({
         {already ? (
           <p className="text-2xl font-bold text-brand">You&apos;re checked in. Welcome!</p>
         ) : window === "open" ? (
-          <CheckInNow eventId={event.id} />
+          userId ? (
+            <CheckInNow eventId={event.id} />
+          ) : (
+            <GuestCheckIn
+              eventId={event.id}
+              loginHref={`/login?callbackUrl=${encodeURIComponent(checkInPath(event.id))}`}
+            />
+          )
         ) : (
           <p className="text-muted">
             {window === "early"

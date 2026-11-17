@@ -26,6 +26,26 @@ export const signupSchema = z.object({
   ref: z.string().optional(),
 });
 
+// Someone without an account checking in at an event. Also starts their
+// membership application, so it asks for the basics admins review.
+export const guestCheckInSchema = z.object({
+  name: z.string().trim().min(2, "Please enter your full name"),
+  email: z.string().trim().email("Enter a valid email address"),
+  // "linkedin.com/in/..." is fine; https:// is added if missing.
+  linkedinUrl: z
+    .string()
+    .trim()
+    .transform((v) => (/^https?:\/\//i.test(v) ? v : `https://${v}`))
+    .pipe(
+      z
+        .string()
+        .url("Enter your LinkedIn profile link")
+        .refine((v) => v.includes("linkedin.com"), "Must be a LinkedIn profile link")
+    ),
+  title: z.string().trim().min(2, "Enter your current role or title"),
+  company: z.string().trim().optional(),
+});
+
 export const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1, "Password is required"),

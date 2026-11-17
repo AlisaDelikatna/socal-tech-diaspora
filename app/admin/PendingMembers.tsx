@@ -14,6 +14,8 @@ type Pending = {
   whatINeed: string;
   howICanHelp: string;
   createdAt: string;
+  // Events they checked in at as a guest.
+  checkedInAt: string[];
 };
 
 export default function PendingMembers({ members }: { members: Pending[] }) {
@@ -56,14 +58,21 @@ export default function PendingMembers({ members }: { members: Pending[] }) {
               >
                 LinkedIn ↗
               </a>
-              <div className="mt-2 text-sm">
-                <p>
-                  <span className="font-medium">Needs:</span> {m.whatINeed}
+              {m.checkedInAt.length > 0 && (
+                <p className="mt-1 text-sm text-brand">
+                  Checked in as a guest at {m.checkedInAt.join(", ")}
                 </p>
-                <p>
-                  <span className="font-medium">Can help:</span> {m.howICanHelp}
-                </p>
-              </div>
+              )}
+              {(m.whatINeed || m.howICanHelp) && (
+                <div className="mt-2 text-sm">
+                  <p>
+                    <span className="font-medium">Needs:</span> {m.whatINeed}
+                  </p>
+                  <p>
+                    <span className="font-medium">Can help:</span> {m.howICanHelp}
+                  </p>
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <Button

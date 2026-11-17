@@ -33,7 +33,8 @@ type EventItem = {
   rsvpCount: number;
   attendees: Attendee[];
   // Members who scanned the check-in QR code at the event.
-  checkedIn: { id: string; name: string }[];
+  // Guests checked in without an account; their application is pending.
+  checkedIn: { id: string; name: string; guest: boolean }[];
   invitedAt: string | null;
   inviteCount: number;
   reminderSentAt: string | null;
@@ -267,7 +268,7 @@ export default function EventManager({
                     <span className="text-xs font-semibold uppercase tracking-wide text-muted">
                       Checked in ({e.checkedIn.length}):{" "}
                     </span>
-                    {e.checkedIn.map((c) => c.name).join(", ")}
+                    {e.checkedIn.map((c) => (c.guest ? `${c.name} (guest)` : c.name)).join(", ")}
                   </p>
                 )}
                 {rsvpOpenId === e.id && e.attendees.length > 0 && (
