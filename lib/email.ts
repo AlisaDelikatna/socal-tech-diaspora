@@ -137,7 +137,7 @@ export function emailLayout(bodyHtml: string): string {
     </div>
     ${bodyHtml}
     <div style="margin-top: 28px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 12px; color: #6b7280;">
-      Kolo Founders Circle — Ukrainian tech professionals in Southern California.
+      Kolo Founders Circle — founders, builders, and entrepreneurs in Southern California.
     </div>
   </div>`;
 }

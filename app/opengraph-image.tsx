@@ -6,7 +6,7 @@ import { readFile } from "node:fs/promises";
 // Next.js serves this at /opengraph-image and wires up the og:image +
 // twitter:image tags automatically.
 
-export const alt = "Kolo Founders Circle — Ukrainian founders in Southern California";
+export const alt = "Kolo Founders Circle — founders in Southern California";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -62,7 +62,7 @@ export default function OpengraphImage() {
             lineHeight: 1.4,
           }}
         >
-          Ukrainian founders, builders, and newcomers in Southern California —
+          Founders, builders, and entrepreneurs in Southern California —
           standing in circle.
         </div>
       </div>

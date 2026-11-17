@@ -21,7 +21,7 @@ export default async function ResourcesPage() {
     <div className="mx-auto max-w-5xl px-4 py-12">
       <h1 className="text-3xl font-extrabold">Resources</h1>
       <p className="text-muted mt-1">
-        Curated tools, programs, and opportunities for Kolo — Ukrainian founders and builders in Southern California.
+        Curated tools, programs, and opportunities for Kolo founders and builders in Southern California.
       </p>
 
       <div className="mt-10 space-y-14">

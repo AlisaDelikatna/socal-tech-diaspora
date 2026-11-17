@@ -8,8 +8,8 @@ export default function Footer() {
         <div>
           <Logo className="h-10 mb-2" />
           <p className="text-muted">
-            Ukrainian tech professionals, founders, and newcomers building
-            together in Southern California.
+            Founders, builders, and entrepreneurs growing together in
+            Southern California.
           </p>
         </div>
         <div className="flex flex-col gap-2">

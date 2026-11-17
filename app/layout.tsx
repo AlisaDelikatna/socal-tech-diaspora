@@ -17,13 +17,13 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXTAUTH_URL ?? "http://localhost:3000"),
-  title: "Kolo Founders Circle — Ukrainian founders in Southern California",
+  title: "Kolo Founders Circle — founders in Southern California",
   description:
-    "Where Ukrainian founders, builders, and newcomers in Southern California stand in circle, grow together, and build something greater than any one of them.",
+    "Where founders, builders, and entrepreneurs in Southern California stand in circle, grow together, and build something greater than any one of them.",
   openGraph: {
     title: "Kolo Founders Circle",
     description:
-      "Ukrainian founders, builders, and newcomers in Southern California — standing in circle, growing together.",
+      "Founders, builders, and entrepreneurs in Southern California — standing in circle, growing together.",
     siteName: "Kolo Founders Circle",
     type: "website",
   },
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Kolo Founders Circle",
     description:
-      "Ukrainian founders, builders, and newcomers in Southern California — standing in circle, growing together.",
+      "Founders, builders, and entrepreneurs in Southern California — standing in circle, growing together.",
   },
   // Favicon is provided by app/icon.png (Next.js file convention).
 };
