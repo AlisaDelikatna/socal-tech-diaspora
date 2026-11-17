@@ -300,7 +300,11 @@ export default function Slideshow(props: Props) {
               )}
               <p className="mt-[1.2cqw] text-[1.8cqw] text-white/70">hello@kolofounders.com</p>
             </div>
-            <Qr svg={qr.join} label="Apply to join" />
+            {/* Check-in again at the end, for anyone who arrived late. */}
+            <div className="flex gap-[2.5cqw]">
+              <Qr svg={qr.checkIn} label="Check in" className="w-[15cqw]" />
+              <Qr svg={qr.join} label="Apply to join" className="w-[15cqw]" />
+            </div>
           </div>
         </Frame>
       ),
