@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { eventSchema } from "@/lib/validations";
 import { parseEventInput } from "@/lib/time";
+import { approvedPresenterIds, presenterRows } from "@/lib/event-presenters";
 
 // POST — create an event (admin only).
 export async function POST(req: NextRequest) {
@@ -21,6 +22,7 @@ export async function POST(req: NextRequest) {
   }
 
   const d = parsed.data;
+  const presenterIds = await approvedPresenterIds(d.presenterIds ?? []);
   const event = await prisma.event.create({
     data: {
       title: d.title,
@@ -31,6 +33,10 @@ export async function POST(req: NextRequest) {
       publicLocation: d.publicLocation?.trim() || null,
       posterUrl: d.posterUrl || null,
       capacity: d.capacity ?? null,
+      wifiName: d.wifiName?.trim() || null,
+      wifiPassword: d.wifiPassword?.trim() || null,
+      discussionQuestions: d.discussionQuestions?.trim() || null,
+      presenters: { create: presenterRows(presenterIds) },
       createdByUserId: session.user.id,
     },
   });

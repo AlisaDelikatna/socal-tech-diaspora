@@ -70,6 +70,14 @@ export const eventSchema = z.object({
     (v) => (v === "" || v == null ? undefined : Number(v)),
     z.number().int().positive().optional()
   ),
+  wifiName: z.string().max(100).optional(),
+  wifiPassword: z.string().max(100).optional(),
+  discussionQuestions: z.string().max(2000).optional(),
+  // Member ids in presenting order, comma-separated (from a hidden input).
+  presenterIds: z
+    .string()
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v.split(",").filter(Boolean))),
 });
 
 export const speakerOpportunitySchema = z.object({

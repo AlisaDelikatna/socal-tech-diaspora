@@ -54,6 +54,12 @@ export default async function EventDetailPage({
           orderBy: [{ position: "asc" }, { createdAt: "asc" }],
           select: { id: true, url: true },
         },
+        presenters: {
+          orderBy: { position: "asc" },
+          select: {
+            user: { select: { id: true, name: true, title: true, company: true, photoUrl: true } },
+          },
+        },
       },
     })
     .catch(() => null);
@@ -110,6 +116,29 @@ export default async function EventDetailPage({
         <div className="mt-6 whitespace-pre-line text-foreground/90">
           {event.description}
         </div>
+
+        {event.presenters.length > 0 && (
+          <div className="mt-8">
+            <h2 className="font-semibold mb-3">Presenters</h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {event.presenters.map(({ user }) => (
+                <Link
+                  key={user.id}
+                  href={`/members/${user.id}`}
+                  className="flex items-center gap-3 rounded-xl border border-border p-3 hover:bg-surface"
+                >
+                  <MemberAvatar name={user.name} photoUrl={user.photoUrl} size={48} />
+                  <span className="min-w-0">
+                    <span className="block font-medium">{user.name}</span>
+                    <span className="block text-sm text-muted">
+                      {[user.title, user.company?.trim()].filter(Boolean).join(", ")}
+                    </span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="mt-8 flex items-center gap-4">
           {isPast ? (

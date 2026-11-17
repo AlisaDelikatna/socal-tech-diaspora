@@ -26,8 +26,14 @@ type EventItem = {
   capacity: number | null;
   posterUrl: string | null;
   photos: Photo[];
+  wifiName: string | null;
+  wifiPassword: string | null;
+  discussionQuestions: string | null;
+  presenterIds: string[];
   rsvpCount: number;
   attendees: Attendee[];
+  // Members who scanned the check-in QR code at the event.
+  checkedIn: { id: string; name: string }[];
   invitedAt: string | null;
   inviteCount: number;
   reminderSentAt: string | null;
@@ -125,6 +131,7 @@ export default function EventManager({
       {creating ? (
         <Card>
           <EventForm
+            members={members}
             busy={busy}
             error={error}
             onSubmit={(ev) => save(ev)}
@@ -141,6 +148,7 @@ export default function EventManager({
             {editingId === e.id ? (
               <EventForm
                 item={e}
+                members={members}
                 busy={busy}
                 error={error}
                 onSubmit={(ev) => save(ev, e.id)}
@@ -173,6 +181,11 @@ export default function EventManager({
                       {e.rsvpCount > 0 &&
                         (rsvpOpenId === e.id ? " ▲" : " — view ▼")}
                     </button>
+                    {e.checkedIn.length > 0 && (
+                      <span className="text-xs text-muted ml-2">
+                        · {e.checkedIn.length} checked in
+                      </span>
+                    )}
                   </div>
                   <div className="flex gap-2 flex-wrap">
                     {new Date(e.dateTime) > new Date() && (
@@ -193,6 +206,14 @@ export default function EventManager({
                     >
                       Photos{e.photos.length > 0 && ` (${e.photos.length})`}
                     </Button>
+                    <a
+                      href={`/admin/events/${e.id}/slideshow`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-sm font-medium hover:bg-surface"
+                    >
+                      Slideshow
+                    </a>
                     <Button variant="outline" onClick={() => setEditingId(e.id)}>
                       Edit
                     </Button>
@@ -241,6 +262,14 @@ export default function EventManager({
                   <p className="mt-3 text-sm text-brand">{inviteMessage.text}</p>
                 )}
 
+                {rsvpOpenId === e.id && e.checkedIn.length > 0 && (
+                  <p className="mt-3 text-sm">
+                    <span className="text-xs font-semibold uppercase tracking-wide text-muted">
+                      Checked in ({e.checkedIn.length}):{" "}
+                    </span>
+                    {e.checkedIn.map((c) => c.name).join(", ")}
+                  </p>
+                )}
                 {rsvpOpenId === e.id && e.attendees.length > 0 && (
                   <div className="mt-3 border-t border-border pt-3">
                     <div className="flex items-center justify-between mb-2">
@@ -294,12 +323,14 @@ export default function EventManager({
 
 function EventForm({
   item,
+  members,
   busy,
   error,
   onSubmit,
   onCancel,
 }: {
   item?: EventItem;
+  members: InviteMember[];
   busy: boolean;
   error: string | null;
   onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
@@ -352,6 +383,30 @@ function EventForm({
           defaultValue={item?.description}
         />
       </Field>
+      <PresenterPicker members={members} initialIds={item?.presenterIds ?? []} />
+      <div className="rounded-lg border border-border p-3 space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted">
+          Slideshow (only shown on the event-night slides)
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Wi-Fi name">
+            <Input name="wifiName" defaultValue={item?.wifiName ?? ""} />
+          </Field>
+          <Field label="Wi-Fi password">
+            <Input name="wifiPassword" defaultValue={item?.wifiPassword ?? ""} />
+          </Field>
+        </div>
+        <Field
+          label="Discussion questions"
+          hint="One per line. Leave empty to use a few general starter questions."
+        >
+          <Textarea
+            name="discussionQuestions"
+            rows={3}
+            defaultValue={item?.discussionQuestions ?? ""}
+          />
+        </Field>
+      </div>
       {error && (
         <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
           {error}
@@ -424,6 +479,76 @@ function PosterField({ initialUrl }: { initialUrl: string | null }) {
         )}
       </div>
       {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
+    </Field>
+  );
+}
+
+// Members presenting at the event, in order. Each gets a slide in the event
+// slideshow; the ids ride along with the form in a hidden input.
+function PresenterPicker({
+  members,
+  initialIds,
+}: {
+  members: InviteMember[];
+  initialIds: string[];
+}) {
+  const [ids, setIds] = useState(initialIds);
+  const byId = new Map(members.map((m) => [m.id, m]));
+  const available = members.filter((m) => !ids.includes(m.id));
+
+  function move(i: number, by: number) {
+    const next = [...ids];
+    [next[i], next[i + by]] = [next[i + by], next[i]];
+    setIds(next);
+  }
+
+  return (
+    <Field label="Presenters" hint="Each presenter gets a slide with their photo, title, and LinkedIn.">
+      <input type="hidden" name="presenterIds" value={ids.join(",")} />
+      {ids.length > 0 && (
+        <ul className="mb-2 space-y-1">
+          {ids.map((id, i) => {
+            const m = byId.get(id);
+            return (
+              <li key={id} className="flex items-center justify-between gap-2 rounded-lg border border-border px-3 py-1.5 text-sm">
+                <span>
+                  <span className="font-medium">{m?.name ?? "Former member"}</span>
+                  {m && (
+                    <span className="text-muted">
+                      {m.title ? ` · ${m.title}` : ""}
+                      {m.company ? ` @ ${m.company}` : ""}
+                    </span>
+                  )}
+                </span>
+                <span className="flex shrink-0 gap-2 text-muted">
+                  <button type="button" disabled={i === 0} onClick={() => move(i, -1)} className="hover:text-brand disabled:opacity-30" aria-label="Move up">
+                    ↑
+                  </button>
+                  <button type="button" disabled={i === ids.length - 1} onClick={() => move(i, 1)} className="hover:text-brand disabled:opacity-30" aria-label="Move down">
+                    ↓
+                  </button>
+                  <button type="button" onClick={() => setIds(ids.filter((x) => x !== id))} className="hover:text-red-600">
+                    Remove
+                  </button>
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <select
+        value=""
+        onChange={(e) => e.target.value && setIds([...ids, e.target.value])}
+        className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm"
+      >
+        <option value="">Add a presenter...</option>
+        {available.map((m) => (
+          <option key={m.id} value={m.id}>
+            {m.name}
+            {m.company ? ` (${m.company})` : ""}
+          </option>
+        ))}
+      </select>
     </Field>
   );
 }

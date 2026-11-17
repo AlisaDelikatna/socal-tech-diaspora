@@ -3,6 +3,7 @@ import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { eventSchema } from "@/lib/validations";
 import { parseEventInput } from "@/lib/time";
+import { approvedPresenterIds, presenterRows } from "@/lib/event-presenters";
 import { notifyAttendees } from "@/lib/event-updates";
 import { removeFiles, PHOTO_BUCKET } from "@/lib/storage";
 
@@ -25,6 +26,8 @@ export async function PUT(
 
   const d = parsed.data;
   const before = await prisma.event.findUnique({ where: { id } });
+  // Left out of the request means "keep the current presenters".
+  const presenterIds = d.presenterIds && (await approvedPresenterIds(d.presenterIds));
   let updated;
   try {
     updated = await prisma.event.update({
@@ -38,6 +41,12 @@ export async function PUT(
         publicLocation: d.publicLocation?.trim() || null,
         posterUrl: d.posterUrl || null,
         capacity: d.capacity ?? null,
+        wifiName: d.wifiName?.trim() || null,
+        wifiPassword: d.wifiPassword?.trim() || null,
+        discussionQuestions: d.discussionQuestions?.trim() || null,
+        ...(presenterIds && {
+          presenters: { deleteMany: {}, create: presenterRows(presenterIds) },
+        }),
       },
     });
   } catch (err) {

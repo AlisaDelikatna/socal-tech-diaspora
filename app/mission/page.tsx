@@ -1,4 +1,5 @@
 import { LinkButton } from "@/components/ui";
+import { MISSION } from "@/lib/site";
 
 export const metadata = {
   title: "Mission & Values — Kolo Founders Circle",
@@ -29,12 +30,7 @@ export default function MissionPage() {
       <span className="text-sm font-semibold text-accent uppercase tracking-wide">
         Our Mission
       </span>
-      <h1 className="mt-2 text-3xl sm:text-4xl font-normal">
-        Kolo Founders Circle is where founders in Southern California find
-        their circle. Whether you&rsquo;ve been building here for years or just
-        arrived, we share our networks, resources, and hard-won knowledge, make
-        the introductions that matter, and help each other close the next deal.
-      </h1>
+      <h1 className="mt-2 text-3xl sm:text-4xl font-normal">{MISSION}</h1>
 
       <h2 className="mt-14 text-2xl font-bold">Our Values</h2>
       <div className="mt-6 space-y-6">

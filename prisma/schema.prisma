@@ -52,6 +52,8 @@ model User {
   rsvps               Rsvp[]
   speakerApplications SpeakerApplication[]
   speakerInquiries    SpeakerInquiry[]
+  presenting          EventPresenter[]
+  checkIns            CheckIn[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -91,15 +93,48 @@ model Event {
   inviteCount          Int                  @default(0)
   // Last reminder sent to people who RSVP'd.
   reminderSentAt       DateTime?
+  // Shown on the event slideshow's welcome slide.
+  wifiName             String?
+  wifiPassword         String?
+  // Starter questions for the slideshow's discussion slide, one per line.
+  discussionQuestions  String?
   createdByUserId      String
   createdBy            User                 @relation("CreatedEvents", fields: [createdByUserId], references: [id], onDelete: Cascade)
   rsvps                Rsvp[]
   speakerOpportunities SpeakerOpportunity[]
   photos               EventPhoto[]
+  presenters           EventPresenter[]
+  checkIns             CheckIn[]
   createdAt            DateTime             @default(now())
   updatedAt            DateTime             @updatedAt
 
   @@index([createdByUserId])
+}
+
+// A member presenting at an event, in the order they're listed.
+model EventPresenter {
+  id       String @id @default(cuid())
+  eventId  String
+  event    Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  position Int    @default(0)
+
+  @@unique([eventId, userId])
+  @@index([userId])
+}
+
+// A member who checked in at the door (scanned the slideshow QR code).
+model CheckIn {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([eventId, userId])
+  @@index([userId])
 }
 
 model Resource {

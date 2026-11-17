@@ -39,6 +39,11 @@ export default async function AdminPage() {
       orderBy: { dateTime: "desc" },
       include: {
         _count: { select: { rsvps: true } },
+        presenters: { orderBy: { position: "asc" }, select: { userId: true } },
+        checkIns: {
+          orderBy: { createdAt: "asc" },
+          select: { user: { select: { id: true, name: true } } },
+        },
         photos: { orderBy: [{ position: "asc" }, { createdAt: "asc" }], select: { id: true, url: true } },
         rsvps: {
           orderBy: { createdAt: "asc" },
@@ -134,6 +139,11 @@ export default async function AdminPage() {
             publicLocation: e.publicLocation,
             capacity: e.capacity,
             posterUrl: e.posterUrl,
+            wifiName: e.wifiName,
+            wifiPassword: e.wifiPassword,
+            discussionQuestions: e.discussionQuestions,
+            presenterIds: e.presenters.map((p) => p.userId),
+            checkedIn: e.checkIns.map((c) => c.user),
             photos: e.photos,
             rsvpCount: e._count.rsvps,
             invitedAt: e.invitedAt?.toISOString() ?? null,
