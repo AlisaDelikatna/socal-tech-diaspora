@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import { sendBulkEmail, emailLayout, escapeHtml, textToHtml } from "@/lib/email";
 import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 import { resolveGuestEmails } from "@/lib/guest-invites";
-import { FREE_MEMBERSHIP_DEADLINE } from "@/lib/guests";
 import { SPEAKING_PATH } from "@/lib/resources";
 
 // POST { userIds, guestEmails?, note? } — email the chosen approved members,
@@ -93,10 +92,10 @@ export async function POST(
         <p><strong>Interested in speaking, or know someone who'd be great?</strong> Just reply to this email with a few lines about the talk.</p>
         <div style="background:#F0ECE3;border-radius:8px;padding:14px 16px;margin:20px 0;">
           <p style="margin:0 0 6px;font-weight:600;">Kolo events are for members only.</p>
-          <p style="margin:0;">Membership is <strong>free</strong> for everyone who joins by ${FREE_MEMBERSHIP_DEADLINE}.</p>
+          <p style="margin:0;">Apply in a couple of minutes to join the community.</p>
         </div>
         <p style="margin: 20px 0;">
-          <a href="${base}/join" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Join for free</a>
+          <a href="${base}/join" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Apply to join</a>
           &nbsp;
           <a href="${base}/events/${opp.event.id}" style="color:#223A5E;">See the event</a>
         </p>

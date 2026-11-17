@@ -1,8 +1,5 @@
 import { z } from "zod";
 
-// Free membership offer shown to non-members in invites.
-export const FREE_MEMBERSHIP_DEADLINE = "December 31, 2026";
-
 export const MAX_GUESTS_PER_SEND = 200;
 
 const email = z.string().email();

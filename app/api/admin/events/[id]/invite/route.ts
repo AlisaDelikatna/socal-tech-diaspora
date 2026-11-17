@@ -4,11 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { sendBulkEmail, emailLayout, escapeHtml, textToHtml } from "@/lib/email";
 import { formatEventDate, formatEventTimeRange } from "@/lib/time";
 import { resolveGuestEmails } from "@/lib/guest-invites";
-import { FREE_MEMBERSHIP_DEADLINE } from "@/lib/guests";
 
 // POST { userIds, guestEmails?, note? } — email an event invitation to the
 // chosen approved members, and to non-members by email address (admin only).
-// Non-members get a version explaining membership is required and free. Replies go to REPLY_TO (lib/email.ts).
+// Non-members get a version explaining membership is required and how to apply. Replies go to REPLY_TO (lib/email.ts).
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -97,10 +96,10 @@ export async function POST(
         ${details}
         <div style="background:#F0ECE3;border-radius:8px;padding:14px 16px;margin:20px 0;">
           <p style="margin:0 0 6px;font-weight:600;">This event is for members only.</p>
-          <p style="margin:0;">Membership is <strong>free</strong> for everyone who joins by ${FREE_MEMBERSHIP_DEADLINE}. Apply in a couple of minutes; once you're approved, you can RSVP.</p>
+          <p style="margin:0;">Apply in a couple of minutes; once you're approved, you can RSVP.</p>
         </div>
         <p style="margin: 20px 0;">
-          <a href="${base}/join" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Join for free</a>
+          <a href="${base}/join" style="background:#223A5E;color:#fff;padding:10px 18px;border-radius:8px;text-decoration:none;">Apply to join</a>
           &nbsp;
           <a href="${base}/events/${event.id}" style="color:#223A5E;">See the event</a>
         </p>

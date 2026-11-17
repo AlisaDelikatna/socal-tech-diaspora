@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button, Field, Textarea } from "@/components/ui";
 import { REPLY_TO } from "@/lib/email-config";
 import { MEMBER_ROLES, INDUSTRIES, inferRoleFromTitle } from "@/lib/member-fields";
-import { parseEmails, FREE_MEMBERSHIP_DEADLINE, MAX_GUESTS_PER_SEND } from "@/lib/guests";
+import { parseEmails, MAX_GUESTS_PER_SEND } from "@/lib/guests";
 
 // Pick members to email by role and industry, review the exact recipient
 // list, and send. Shared by event and speaker-opportunity invites.
@@ -72,7 +72,7 @@ export default function MemberInvitePanel({
   // group like an event's attendees).
   showFilters?: boolean;
   // Let the admin add non-members by email; they get a "members only,
-  // membership is free" version of the email.
+  // apply to join" version of the email.
   allowGuests?: boolean;
   onCancel: () => void;
   onSent: (message: string) => void;
@@ -285,8 +285,7 @@ export default function MemberInvitePanel({
           </div>
           <p className="mt-1 text-xs text-muted">
             Add one email or paste many. They get a version explaining Kolo is
-            members-only and membership is free for anyone who joins by{" "}
-            {FREE_MEMBERSHIP_DEADLINE}. Anyone who already has an account is skipped.
+            members-only and how to apply. Anyone who already has an account is skipped.
           </p>
           {guestInvalid.length > 0 && (
             <p className="mt-1 text-xs text-red-600">
